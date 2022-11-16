@@ -1,1 +1,3 @@
+deepgram-sdk==2.0.0
 flask==2.2.2
+
