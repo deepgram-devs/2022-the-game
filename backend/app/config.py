@@ -37,8 +37,8 @@ def _get_string(name: str, *, default: str | None = None) -> str:
     raise ValueError(f"Configuration option {name} is required")
 
 
-DEBUG = _get_bool("APP_DEBUG", default=False)
-PORT = _get_int("APP_PORT", default=8080)
+APP_DEBUG = _get_bool("APP_DEBUG", default=False)
+APP_PORT = _get_int("APP_PORT", default=8080)
 DEEPGRAM_API_KEY = _get_string("DEEPGRAM_API_KEY")
 POSTGRES_USER = _get_string("POSTGRES_USER")
 POSTGRES_PASSWORD = _get_string("POSTGRES_PASSWORD")
