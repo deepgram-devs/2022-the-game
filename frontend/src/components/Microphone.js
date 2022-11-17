@@ -84,7 +84,7 @@ export default function Microphone({ onSuccess, onFail }) {
     getWebSocket,
   } = useWebSocket(WEBSOCKET_URL, {
     protocols: WEBSOCKET_PROTOCOLS,
-    onOpen: () => console.log('opened'),
+    onOpen: () => console.log('microphone socket opened'),
     onMessage,
     //Will attempt to reconnect on all close events, such as server shutting down
     shouldReconnect: (closeEvent) => true,

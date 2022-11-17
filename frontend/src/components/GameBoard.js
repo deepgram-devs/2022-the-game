@@ -1,4 +1,5 @@
 import { useReducer } from 'react';
+import { useWebSocket } from 'react-use-websocket/dist/lib/use-websocket';
 import CARD_DATA from '../CardData';
 import getSvgPath from '../utils/getSvgPath';
 import EventCard from './EventCard';
@@ -32,6 +33,27 @@ const reducer = (state, action) => {
 };
 
 export default function GameBoard() {
+  // TODO: send message when audio recording starts
+  // {
+  //   "type": "audio_start",
+  //   "mimetype:" "<audio mimetype>"
+  // }
+  const {
+    sendMessage,
+    sendJsonMessage,
+    lastMessage,
+    lastJsonMessage,
+    readyState,
+    getWebSocket,
+  } = useWebSocket('ws://localhost:8080/play', {
+    onOpen: () => console.log('/play socket opened'),
+    onClose: () => console.log('/play socket closed'),
+    onMessage: (event) => {
+      const data = JSON.parse(event.data);
+      console.log('/play onMessage', data);
+    },
+  });
+
   const [state, dispatch] = useReducer(reducer, {
     events: CARD_DATA,
     totalScore: 0,
