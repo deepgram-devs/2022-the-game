@@ -58,7 +58,7 @@ function Header() {
             color: '#f8f8f8',
           }}
         >
-          Survive 2022 - The Game
+          2022: The Game
         </h1>
 
         <h2
