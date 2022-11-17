@@ -2,6 +2,7 @@ import { memo } from 'react';
 import Modal from 'react-modal';
 import { ReactSVG } from 'react-svg';
 import Row from './Row';
+import getSvgPath from '../utils/getSvgPath';
 
 export default memo(({ isOpen, onClose, children, ...props }) => (
   <Modal
@@ -39,7 +40,7 @@ export default memo(({ isOpen, onClose, children, ...props }) => (
         }}
         onClick={onClose}
       >
-        <ReactSVG src="/svgs/close.svg" />
+        <ReactSVG src={getSvgPath('close')} />
       </button>
     </Row>
 

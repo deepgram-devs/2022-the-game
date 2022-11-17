@@ -2,16 +2,17 @@ import GameBoard from './components/GameBoard';
 import Row from './components/Row';
 import { ReactSVG } from 'react-svg';
 import { ModalProvider } from 'use-modal-hook';
+import getSvgPath from './utils/getSvgPath';
 
 /**
  * TODOs
  * - state management (reducer) for game progress
  * - save state to local storage
  * - microphone recording reducer?
- * 
+ *
  * COMPLETED_LEVEL
- * 
- * 
+ *
+ *
  */
 
 function App() {
@@ -19,7 +20,7 @@ function App() {
     <ModalProvider>
       <div
         style={{
-          backgroundImage: 'url("/svgs/bg-pattern.svg")',
+          backgroundImage: `url(${getSvgPath('bg-pattern')})`,
           backgroundRepeat: 'repeat-y',
           backgroundPosition: 'top left',
         }}
@@ -69,7 +70,7 @@ function Header() {
             gap: '10px',
           }}
         >
-          Powered by: <ReactSVG src="/svgs/logo-deepgram.svg" />
+          Powered by: <ReactSVG src={getSvgPath('logo-deepgram')} />
         </h2>
       </Row>
     </Row>

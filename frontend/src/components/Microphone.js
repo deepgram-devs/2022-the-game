@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { ReactSVG } from 'react-svg';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
+import getSvgPath from '../utils/getSvgPath';
 import Col from './Col';
 
 /**
@@ -90,7 +91,7 @@ export default function Microphone({ onRecordingDone }) {
   const recorder = useMemo(
     () =>
       new Recorder({
-        encoderPath: '/recorderjs/encoderWorker.min.js',
+        encoderPath: '/app/recorderjs/encoderWorker.min.js',
         leaveStreamOpen: true,
         numberOfChannels: 1,
 
@@ -161,7 +162,7 @@ export default function Microphone({ onRecordingDone }) {
         onClick={toggleRecording}
       >
         <ReactSVG
-          src={state.isRecording ? '/svgs/pause.svg' : '/svgs/microphone.svg'}
+          src={getSvgPath(state.isRecording ? 'pause' : 'microphone')}
         />
       </button>
 

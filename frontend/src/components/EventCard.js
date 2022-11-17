@@ -6,6 +6,7 @@ import { useModal } from 'use-modal-hook';
 import Row from './Row';
 import Microphone from './Microphone';
 import BaseModal from './BaseModal';
+import getSvgPath from '../utils/getSvgPath';
 
 export default function EventCard({
   eventTitle,
@@ -102,8 +103,8 @@ function CompletedEventCard() {
   return (
     <EventCardImage
       title="Survivor Card"
-      iconPath="/svgs/sparkle.svg"
-      background="/svgs/card-completed.svg"
+      iconPath={getSvgPath('sparkle')}
+      background={getSvgPath('card-completed')}
       borderColor="#1E2C3C"
       textColor="#000"
     />
@@ -115,8 +116,8 @@ function ActiveEventCard({ isHovered }) {
     <EventCardImage
       isHovered={isHovered}
       title="Draw a life event card"
-      iconPath="/svgs/unlocked.svg"
-      background="/svgs/card-unlocked.svg"
+      iconPath={getSvgPath('unlocked')}
+      background={getSvgPath('card-unlocked')}
       borderColor="#96A2FF"
     />
   );
@@ -125,8 +126,8 @@ function ActiveEventCard({ isHovered }) {
 function LockedEventCard() {
   return (
     <EventCardImage
-      iconPath="/svgs/locked.svg"
-      background="/svgs/card-locked.svg"
+      iconPath={getSvgPath('locked')}
+      background={getSvgPath('card-locked')}
       borderColor="#1E2C3C"
     />
   );

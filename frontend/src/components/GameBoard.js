@@ -1,5 +1,6 @@
 import { useReducer } from 'react';
 import CARD_DATA from '../CardData';
+import getSvgPath from '../utils/getSvgPath';
 import EventCard from './EventCard';
 import Row from './Row';
 
@@ -75,7 +76,7 @@ export default function GameBoard() {
         justifyContent="center"
         style={{
           gridColumnStart: 'span 3',
-          backgroundImage: 'url("/svgs/card-2023.svg")',
+          backgroundImage: `url(${getSvgPath('card-2023')})`,
           backgroundSize: 'cover',
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'center center',
