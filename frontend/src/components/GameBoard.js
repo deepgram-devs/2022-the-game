@@ -5,6 +5,7 @@ import useHover from '../hooks/useHover';
 import { useModal } from 'use-modal-hook';
 import Modal from 'react-modal';
 import Row from './Row';
+import Microphone from './Microphone';
 
 export default function GameBoard() {
   return (
@@ -106,7 +107,11 @@ const CardDetailsModal = memo(
         </button>
       </Row>
 
-      <div>{description}</div>
+      <Col style={{ gap: '30px' }}>
+        <div>{description}</div>
+
+        <Microphone />
+      </Col>
     </Modal>
   )
 );

@@ -12,6 +12,7 @@
     "react-query": "^3.39.2",
     "react-scripts": "5.0.1",
     "react-svg": "^15.1.12",
+    "react-use-websocket": "^3.0.0",
     "use-modal-hook": "^2.1.2",
     "web-vitals": "^2.1.4"
   },

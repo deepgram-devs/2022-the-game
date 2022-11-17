@@ -3,6 +3,17 @@ import Row from './components/Row';
 import { ReactSVG } from 'react-svg';
 import { ModalProvider } from 'use-modal-hook';
 
+/**
+ * TODOs
+ * - state management (reducer) for game progress
+ * - save state to local storage
+ * - microphone recording reducer?
+ * 
+ * COMPLETED_LEVEL
+ * 
+ * 
+ */
+
 function App() {
   return (
     <ModalProvider>
