@@ -15,4 +15,4 @@ def serve(path):
         return flask.send_from_directory(app.static_folder, 'index.html')
 
 
-app.run(host='0.0.0.0', port=8080, debug=True)
+app.run(host='0.0.0.0', port=config.PORT, debug=config.DEBUG)
