@@ -72,6 +72,7 @@ class TrappedFamilyCard(Card):
 
 
 CARDS: list[type[Card]] = []
+START_RECORDING_TIMEOUT = 300
 
 
 def play(ws: simple_websocket.Server) -> None:
@@ -85,6 +86,19 @@ def play(ws: simple_websocket.Server) -> None:
 
         ws.send(json.dumps({"type": "new_card", "message": card.prompt}))
 
+        start = time.time()
+        mimetype = "audio/ogg"
+        while (timeout := START_RECORDING_TIMEOUT - time.time() + start) > 0:
+            data = ws.receive(timeout)
+            if isinstance(data, str):
+                data = json.loads(data)
+                if data.get("type") == "audio_start":
+                    mimetype = data.get("mimetype")
+                    break
+        else:
+            # Timed out
+            break
+
         buffer = bytearray()
         start = time.time()
         while (timeout := card.timeout - time.time() + start) > 0:
@@ -93,7 +107,7 @@ def play(ws: simple_websocket.Server) -> None:
                 break
             buffer.extend(data)
 
-        source = {"buffer": buffer, "mimetype": "audio/x-wav"}
+        source = {"buffer": buffer, "mimetype": mimetype}
         response = asyncio.run(
             deepgram_client.transcription.prerecorded(source, card.options)
         )
