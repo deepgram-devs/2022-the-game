@@ -1,6 +1,7 @@
 import abc
 import asyncio
 import json
+import logging
 import random
 import string
 import time
@@ -9,6 +10,8 @@ import deepgram
 import simple_websocket
 
 from . import config
+
+logger = logging.getLogger(__name__)
 
 deepgram_client = deepgram.Deepgram(config.DEEPGRAM_API_KEY)
 
@@ -24,11 +27,13 @@ class Card(abc.ABC):
         self,
         *,
         prompt: str,
-        failure: str,
+        success: str = "Success!",
+        failure: str = "Failure!",
         options: deepgram.transcription.PrerecordedOptions,
         timeout: int,
     ) -> None:
         self.prompt = prompt
+        self.success = success
         self.failure = failure
         self.options = options
         self.timeout = timeout
@@ -46,7 +51,6 @@ class TrappedFamilyCard(Card):
 
         super().__init__(
             prompt=f'You are trapped with family over the holidays and they want to play a game. Try to say over 10 words that start with the letter "{self.letter}"',
-            failure="Failed!",
             options={},
             timeout=20,
         )
@@ -77,8 +81,9 @@ def play(ws: simple_websocket.Server) -> None:
     score = 0
     while cards:
         card = cards.pop(0)
+        logger.info("Selected card: %s", type(card).__name__)
 
-        ws.send(json.dumps({"type": "prompt", "message": card.prompt}))
+        ws.send(json.dumps({"type": "new_card", "message": card.prompt}))
 
         buffer = bytearray()
         start = time.time()
@@ -92,12 +97,15 @@ def play(ws: simple_websocket.Server) -> None:
         response = asyncio.run(
             deepgram_client.transcription.prerecorded(source, card.options)
         )
+        logger.info("Received Deepgram response: %s", response)
 
         if not card.validate_response(response):
-            ws.send(
-                json.dumps({"type": "failure", "message": card.failure, "score": score})
-            )
-            return
+            logger.info("Level failed.")
+            ws.send(json.dumps({"type": "failure", "message": card.failure}))
+            break
+
+        logger.info("Level succeeded.")
+        ws.send(json.dumps({"type": "success", "message": card.success}))
         score += 1
 
-    ws.send({"type": "success"})
+    ws.send(json.dumps({"type": "game_over", "score": score}))
