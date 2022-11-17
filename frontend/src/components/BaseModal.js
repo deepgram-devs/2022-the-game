@@ -13,8 +13,7 @@ export default memo(({ isOpen, onClose, children, ...props }) => (
       content: {
         color: '#f8f8f8',
         backgroundColor: '#1a2532',
-        width: '50%',
-        height: '75%',
+        width: '500px',
         top: '50%',
         left: '50%',
         right: 'auto',
@@ -46,6 +45,7 @@ export default memo(({ isOpen, onClose, children, ...props }) => (
 
     {children({
       ...props,
+      onClose,
     })}
   </Modal>
 ));

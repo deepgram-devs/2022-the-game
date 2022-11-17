@@ -1,5 +1,5 @@
 import { ReactSVG } from 'react-svg';
-import { Fragment } from 'react';
+import { Fragment, useReducer } from 'react';
 import Col from './Col';
 import useHover from '../hooks/useHover';
 import { useModal } from 'use-modal-hook';
@@ -7,6 +7,7 @@ import Row from './Row';
 import Microphone from './Microphone';
 import BaseModal from './BaseModal';
 import getSvgPath from '../utils/getSvgPath';
+import PrimaryButton from './PrimaryButton';
 
 export default function EventCard({
   eventTitle,
@@ -133,18 +134,75 @@ function LockedEventCard() {
   );
 }
 
+const modalReducer = (state, action) => {
+  switch (action.type) {
+    case 'SUCCESS':
+      return { ...state, success: true };
+
+    case 'FAIL':
+      return { ...state, success: false };
+    default:
+      return state;
+  }
+};
+
 function EventCardDetailsModal(props) {
+  const [state, dispatch] = useReducer(modalReducer, {
+    success: null,
+  });
+
   return (
     <BaseModal {...props}>
-      {({ description }) => (
+      {({ description, onClose }) => (
         <Fragment>
           <Col style={{ gap: '30px' }}>
             <div>{description}</div>
 
-            <Microphone />
+            <Microphone
+              onSuccess={() => dispatch({ type: 'SUCCESS' })}
+              onFail={() => dispatch({ type: 'FAIL' })}
+            />
+
+            {state.success !== null ? (
+              <Verdict success={state.success} onClose={onClose} />
+            ) : null}
           </Col>
         </Fragment>
       )}
     </BaseModal>
+  );
+}
+
+function Verdict({ success, onClose }) {
+  return (
+    <Col alignItems="center">
+      <Row style={{ width: '100%' }}>
+        <h3
+          style={{
+            color: '#7F94AD',
+            textTransform: 'uppercase',
+            fontSize: '14px',
+          }}
+        >
+          Verdict
+        </h3>
+      </Row>
+
+      <Row style={{ gap: '20px' }} alignItems="center" justifyContent="center">
+        <ReactSVG
+          src={getSvgPath(success ? 'thumbs-up-button' : 'thumbs-down-button')}
+        />
+
+        <span css={{ maxWidth: '75%' }}>
+          {success
+            ? 'Hooray! You were angry enough and can continue 2022.'
+            : 'You were not angry enough. Better luck next time!'}
+        </span>
+      </Row>
+
+      <PrimaryButton onClick={onClose} style={{ marginTop: '20px' }}>
+        {success ? 'Next Challenge' : 'Oh No!'}
+      </PrimaryButton>
+    </Col>
   );
 }

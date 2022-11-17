@@ -11,6 +11,7 @@ import { ReactSVG } from 'react-svg';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import getSvgPath from '../utils/getSvgPath';
 import Col from './Col';
+import Row from './Row';
 
 /**
  * START_RECORDING
@@ -46,7 +47,7 @@ const reducer = (state, action) => {
   }
 };
 
-export default function Microphone({ onRecordingDone }) {
+export default function Microphone({ onSuccess, onFail }) {
   const [state, dispatch] = useReducer(reducer, {
     isRecording: false,
     transcript: '',
@@ -67,7 +68,7 @@ export default function Microphone({ onRecordingDone }) {
   const onMessage = useCallback((event) => {
     const data = JSON.parse(event.data);
     const final = data.is_final;
-    const words = data.channel.alternatives[0].words;
+    const words = data?.channel?.alternatives[0]?.words ?? [];
 
     if (words.length) {
       setChunks((prev) => [...prev, { words, final }]);
@@ -198,6 +199,16 @@ export default function Microphone({ onRecordingDone }) {
           src={getSvgPath(state.isRecording ? 'pause' : 'microphone')}
         />
       </button>
+
+      <Row>
+        <button style={{ cursor: 'pointer' }} onClick={onSuccess}>
+          Succeed
+        </button>
+
+        <button style={{ cursor: 'pointer' }} onClick={onFail}>
+          Fail
+        </button>
+      </Row>
 
       <Transcript transcript={transcript} />
     </Col>
