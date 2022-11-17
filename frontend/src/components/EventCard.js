@@ -141,6 +141,9 @@ const modalReducer = (state, action) => {
 
     case 'FAIL':
       return { ...state, success: false };
+
+    case 'GAMEOVER':
+      return { ...state, showGameover: true };
     default:
       return state;
   }
@@ -149,31 +152,93 @@ const modalReducer = (state, action) => {
 function EventCardDetailsModal(props) {
   const [state, dispatch] = useReducer(modalReducer, {
     success: null,
+    showGameover: false,
   });
 
   return (
     <BaseModal {...props}>
-      {({ description, onClose }) => (
-        <Fragment>
-          <Col style={{ gap: '30px' }}>
-            <div>{description}</div>
+      {({ description, onClose }) =>
+        state.showGameover ? (
+          <Gameover />
+        ) : (
+          <Fragment>
+            <Col style={{ gap: '30px' }}>
+              <div>{description}</div>
 
-            <Microphone
-              onSuccess={() => dispatch({ type: 'SUCCESS' })}
-              onFail={() => dispatch({ type: 'FAIL' })}
-            />
+              <Microphone
+                onSuccess={() => dispatch({ type: 'SUCCESS' })}
+                onFail={() => dispatch({ type: 'FAIL' })}
+              />
 
-            {state.success !== null ? (
-              <Verdict success={state.success} onClose={onClose} />
-            ) : null}
-          </Col>
-        </Fragment>
-      )}
+              {state.success !== null ? (
+                <Verdict
+                  success={state.success}
+                  onClose={onClose}
+                  onFailCtaClick={() => dispatch({ type: 'GAMEOVER' })}
+                />
+              ) : null}
+            </Col>
+          </Fragment>
+        )
+      }
     </BaseModal>
   );
 }
 
-function Verdict({ success, onClose }) {
+function Gameover() {
+  return (
+    <Col alignItems="center" justifyContent="center" style={{ gap: '20px' }}>
+      <Row
+        alignItems="center"
+        justifyContent="center"
+        style={{ fontWeight: 'bold', fontSize: '16px' }}
+      >
+        You made it to May.
+      </Row>
+
+      <Row
+        alignItems="center"
+        justifyContent="center"
+        style={{ textAlign: 'center' }}
+      >
+        Well, 2023 isn't for everyone.
+        <br />
+        You need to be extremely hardcore.
+      </Row>
+
+      <Col alignItems="center" justifyContent="center" style={{ gap: '5px' }}>
+        <Row
+          alignItems="center"
+          justifyContent="center"
+          style={{ color: '#7F94AD', fontSize: '14px' }}
+        >
+          Share your result
+        </Row>
+
+        <Row
+          alignItems="center"
+          justifyContent="space-between"
+          style={{ width: '100%' }}
+        >
+          <ReactSVG src={getSvgPath('mail')} />
+          <ReactSVG src={getSvgPath('twitter')} />
+          <ReactSVG src={getSvgPath('linkedin')} />
+          <ReactSVG src={getSvgPath('facebook')} />
+        </Row>
+
+        <Row
+          alignItems="center"
+          justifyContent="center"
+          style={{ marginTop: '20px' }}
+        >
+          Play again
+        </Row>
+      </Col>
+    </Col>
+  );
+}
+
+function Verdict({ success, onClose, onFailCtaClick }) {
   return (
     <Col alignItems="center">
       <Row style={{ width: '100%' }}>
@@ -200,7 +265,10 @@ function Verdict({ success, onClose }) {
         </span>
       </Row>
 
-      <PrimaryButton onClick={onClose} style={{ marginTop: '20px' }}>
+      <PrimaryButton
+        onClick={success ? onClose : onFailCtaClick}
+        style={{ marginTop: '20px' }}
+      >
         {success ? 'Next Challenge' : 'Oh No!'}
       </PrimaryButton>
     </Col>
