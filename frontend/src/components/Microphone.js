@@ -165,16 +165,11 @@ export default function Microphone({ onRecordingDone }) {
         />
       </button>
 
-      {state.isRecording ? <Recording /> : null}
-
       <Transcript transcript={transcript} />
     </Col>
   );
 }
 
-function Recording() {
-  return <div>recording...</div>;
-}
 
 function Transcript({ transcript }) {
   return transcript ? (
