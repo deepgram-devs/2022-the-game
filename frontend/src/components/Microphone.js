@@ -53,6 +53,7 @@ export default function Microphone({ onRecordingDone }) {
   });
 
   const [chunks, setChunks] = useState([]);
+  const [audioData, setAudioData] = useState([]);
 
   const transcript = useMemo(
     () =>
@@ -111,6 +112,7 @@ export default function Microphone({ onRecordingDone }) {
     recorder.addEventListener('dataAvailable', (e) => {
       if (readyState === ReadyState.OPEN) {
         sendMessage(e.detail);
+        setAudioData((prev) => [...prev, e.detail]);
       }
     });
 
@@ -126,21 +128,52 @@ export default function Microphone({ onRecordingDone }) {
     };
   }, [sendMessage, readyState]);
 
+  const saveRecording = useCallback(() => {
+    const size = 0;
+
+    audioData.forEach((e) => {
+      size += e.length;
+    });
+
+    const big = new Uint8Array(size);
+    let last = 0;
+
+    audioData.forEach((e) => {
+      big.set(e, last);
+      last += e.length;
+    });
+
+    const blob = new Blob(audioData, { type: 'audio/ogg' });
+
+    return blob;
+
+    // return window.URL.createObjectURL(blob);
+  }, [audioData]);
+
+  const startRecording = useCallback(() => {
+    setChunks([]);
+    setAudioData([]);
+    recorder.start();
+    dispatch({ type: 'START_RECORDING' });
+  }, [recorder]);
+
+  const stopRecording = useCallback(() => {
+    recorder.stop();
+
+    const audio = saveRecording();
+
+    console.log('audio binary', audio);
+
+    dispatch({ type: 'STOP_RECORDING' });
+  }, [recorder]);
+
   const toggleRecording = useCallback(() => {
     if (state.isRecording) {
-      recorder.stop();
-
-      // TODO: POST TO BE
-      // pass level id
-      // postToBE().then((result) => dispatch({ type: result.success ? 'SUCCESS' : 'FAIL' }))
-
-      dispatch({ type: 'STOP_RECORDING' });
+      stopRecording();
     } else {
-      setChunks([]);
-      recorder.start();
-      dispatch({ type: 'START_RECORDING' });
+      startRecording();
     }
-  }, [state.isRecording, recorder]);
+  }, [state.isRecording, stopRecording, startRecording]);
 
   return (
     <Col
