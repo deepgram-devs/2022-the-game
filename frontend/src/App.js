@@ -17,7 +17,13 @@ import { ModalProvider } from 'use-modal-hook';
 function App() {
   return (
     <ModalProvider>
-      <div>
+      <div
+        style={{
+          backgroundImage: 'url("/svgs/bg-pattern.svg")',
+          backgroundRepeat: 'repeat-y',
+          backgroundPosition: 'top left',
+        }}
+      >
         <Header />
         <GameBoard />
       </div>
@@ -38,7 +44,12 @@ function Header() {
       <Row
         alignItems="center"
         justifyContent="space-between"
-        style={{ maxWidth: '1280px', width: '100%', margin: '0 auto' }}
+        style={{
+          maxWidth: '1200px',
+          width: '100%',
+          margin: '0 auto',
+          padding: '0 30px',
+        }}
       >
         <h1
           style={{
@@ -58,7 +69,7 @@ function Header() {
             gap: '10px',
           }}
         >
-          Powered by: <ReactSVG src="/logo-deepgram.svg" />
+          Powered by: <ReactSVG src="/svgs/logo-deepgram.svg" />
         </h2>
       </Row>
     </Row>

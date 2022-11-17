@@ -1,13 +1,50 @@
-import { memo } from 'react';
+import { useReducer } from 'react';
 import CARD_DATA from '../CardData';
-import Col from './Col';
-import useHover from '../hooks/useHover';
-import { useModal } from 'use-modal-hook';
-import Modal from 'react-modal';
+import EventCard from './EventCard';
 import Row from './Row';
-import Microphone from './Microphone';
+
+const reducer = (state, action) => {
+  switch (action.type) {
+    case 'COMPLETED_EVENT':
+      return {
+        ...state,
+        totalScore: state.totalScore + action.event.score,
+        events: state.events.map((event) => {
+          return event.id === action.event.id
+            ? { ...event, completed: true, score: action.event.score }
+            : event;
+        }),
+      };
+
+    case 'FAILED_EVENT':
+      return {
+        ...state,
+        events: state.events.map((event) => {
+          return event.id === action.event.id
+            ? { ...event, completed: false }
+            : event;
+        }),
+      };
+    default:
+      return state;
+  }
+};
 
 export default function GameBoard() {
+  const [state, dispatch] = useReducer(reducer, {
+    events: CARD_DATA,
+    totalScore: 0,
+  });
+
+  const lastCompletedEventIndex =
+    state.events.findIndex((event) => event.completed) ?? 0;
+
+  const possibleNextIndex = lastCompletedEventIndex + 1;
+  const maxIndex = state.events.length - 1;
+
+  const activeIndex =
+    possibleNextIndex > maxIndex ? maxIndex : possibleNextIndex;
+
   return (
     <div
       style={{
@@ -15,106 +52,48 @@ export default function GameBoard() {
         gridTemplateColumns: 'repeat(5, 1fr)',
         gap: '20px',
         padding: '30px',
-        maxWidth: '1280px',
+        maxWidth: '1200px',
         margin: '0 auto',
       }}
     >
-      {CARD_DATA.map((card) => (
-        <Card key={card.eventTitle} {...card} />
+      {state.events.map((eventCard, i) => (
+        <EventCard
+          key={eventCard.id}
+          {...eventCard}
+          isActive={activeIndex === i}
+          onPass={(event) => {
+            dispatch({ type: 'COMPLETED_EVENT', event });
+          }}
+          onFail={(event) => {
+            dispatch({ type: 'FAILED_EVENT', event });
+          }}
+        />
       ))}
+
+      <Row
+        alignItems="center"
+        justifyContent="center"
+        style={{
+          gridColumnStart: 'span 3',
+          backgroundImage: 'url("/svgs/card-2023.svg")',
+          backgroundSize: 'cover',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center center',
+          width: '100%',
+          height: '300px',
+          color: '#fff',
+          fontSize: '60px',
+          fontWeight: 'bold',
+          border: '2px solid #1E2C3C',
+          marginTop: '26px',
+          borderRadius: '10px',
+        }}
+      >
+        2023
+      </Row>
     </div>
   );
 }
-
-function Card({ eventTitle, eventBody }) {
-  const [hoverRef, isHovered] = useHover();
-  const [showModal, hideModal] = useModal(CardDetailsModal, {
-    title: eventTitle,
-    description: eventBody,
-    closeBtnLabel: 'Close',
-  });
-
-  return (
-    <Col
-      ref={hoverRef}
-      alignItems="center"
-      justifyContent="center"
-      style={{
-        gap: '8px',
-        cursor: 'pointer',
-      }}
-      onClick={showModal}
-    >
-      <span
-        style={{
-          textTransform: 'uppercase',
-          fontWeight: 'bold',
-          transition: 'color 350ms',
-          color: isHovered ? '#fd5c5c' : '#f8f8f8',
-        }}
-      >
-        {eventTitle}
-      </span>
-
-      <CardImage isHovered={isHovered} />
-    </Col>
-  );
-}
-
-function CardImage({ isHovered }) {
-  return (
-    <div
-      style={{
-        borderRadius: '10px',
-        background: isHovered ? '#fd5c5c' : '#1a2532',
-        transition: 'background 350ms',
-        width: '100%',
-        height: '250px',
-      }}
-    ></div>
-  );
-}
-
-const CardDetailsModal = memo(
-  ({ isOpen, onClose, title, description, closeBtnLabel }) => (
-    <Modal
-      style={{
-        overlay: {
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        },
-        content: {
-          color: '#f8f8f8',
-          backgroundColor: '#1a2532',
-          width: '50%',
-          height: '75%',
-          top: '50%',
-          left: '50%',
-          right: 'auto',
-          bottom: 'auto',
-          marginRight: '-50%',
-          transform: 'translate(-50%, -50%)',
-          borderRadius: '10px',
-          border: 0,
-        },
-      }}
-      isOpen={isOpen}
-      onRequestClose={onClose}
-    >
-      <Row justifyContent="space-between" alignItems="center">
-        <h2>{title}</h2>
-        <button onClick={onClose} style={{ cursor: 'pointer' }}>
-          {closeBtnLabel}
-        </button>
-      </Row>
-
-      <Col style={{ gap: '30px' }}>
-        <div>{description}</div>
-
-        <Microphone />
-      </Col>
-    </Modal>
-  )
-);
 
 // bg: #050a0f
 // header bg: #0b121b
@@ -122,3 +101,4 @@ const CardDetailsModal = memo(
 // "white": #f8f8f8
 // powered by: #7c92ab
 // dg red: #fd5c5c
+// meadow: #38EDAC

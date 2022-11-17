@@ -7,6 +7,7 @@ import {
   useState,
   useRef,
 } from 'react';
+import { ReactSVG } from 'react-svg';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import Col from './Col';
 
@@ -45,13 +46,31 @@ const reducer = (state, action) => {
 };
 
 export default function Microphone({ onRecordingDone }) {
-  const [transcript, setTranscript] = useState('');
   const [state, dispatch] = useReducer(reducer, {
     isRecording: false,
     transcript: '',
   });
 
   const [chunks, setChunks] = useState([]);
+
+  const transcript = useMemo(
+    () =>
+      chunks
+        .filter((chunk) => chunk.final)
+        .map((chunk) => chunk.words.map((c) => c.punctuated_word).join(' '))
+        .join(' '),
+    [chunks]
+  );
+
+  const onMessage = useCallback((event) => {
+    const data = JSON.parse(event.data);
+    const final = data.is_final;
+    const words = data.channel.alternatives[0].words;
+
+    if (words.length) {
+      setChunks((prev) => [...prev, { words, final }]);
+    }
+  }, []);
 
   const {
     sendMessage,
@@ -63,15 +82,7 @@ export default function Microphone({ onRecordingDone }) {
   } = useWebSocket(WEBSOCKET_URL, {
     protocols: WEBSOCKET_PROTOCOLS,
     onOpen: () => console.log('opened'),
-    onMessage: (event) => {
-      const data = JSON.parse(event.data);
-      const final = data.is_final;
-      const words = data.channel.alternatives[0].words;
-
-      if (words.length) {
-        setChunks((prev) => [...prev, { words, final }]);
-      }
-    },
+    onMessage,
     //Will attempt to reconnect on all close events, such as server shutting down
     shouldReconnect: (closeEvent) => true,
   });
@@ -114,6 +125,22 @@ export default function Microphone({ onRecordingDone }) {
     };
   }, [sendMessage, readyState]);
 
+  const toggleRecording = useCallback(() => {
+    if (state.isRecording) {
+      recorder.stop();
+
+      // TODO: POST TO BE
+      // pass level id
+      // postToBE().then((result) => dispatch({ type: result.success ? 'SUCCESS' : 'FAIL' }))
+
+      dispatch({ type: 'STOP_RECORDING' });
+    } else {
+      setChunks([]);
+      recorder.start();
+      dispatch({ type: 'START_RECORDING' });
+    }
+  }, [state.isRecording, recorder]);
+
   return (
     <Col
       alignItems="center"
@@ -124,35 +151,40 @@ export default function Microphone({ onRecordingDone }) {
       }}
     >
       <button
-        style={{ cursor: 'pointer' }}
-        onClick={() => {
-          dispatch({ type: 'TOGGLE_RECORDING' });
-
-          if (state.isRecording) {
-            recorder.stop();
-            const text = chunks
-              .filter((chunk) => chunk.final)
-              .map((chunk) =>
-                chunk.words.map((c) => c.punctuated_word).join(' ')
-              )
-              .join(' ');
-            setTranscript(text);
-          } else {
-            setChunks([]);
-            recorder.start();
-          }
+        style={{
+          cursor: 'pointer',
+          borderRadius: '50%',
+          background: '#38EDAC',
+          width: '80px',
+          height: '80px',
         }}
+        onClick={toggleRecording}
       >
-        {state.isRecording ? 'Stop Recording' : 'Record'}
+        <ReactSVG
+          src={state.isRecording ? '/svgs/pause.svg' : '/svgs/microphone.svg'}
+        />
       </button>
 
       {state.isRecording ? <Recording /> : null}
 
-      {transcript ? <div>Transcript: {transcript}</div> : null}
+      <Transcript transcript={transcript} />
     </Col>
   );
 }
 
 function Recording() {
   return <div>recording...</div>;
+}
+
+function Transcript({ transcript }) {
+  return transcript ? (
+    <div
+      style={{
+        padding: '10px 0',
+        fontFamily: 'monospace',
+      }}
+    >
+      {transcript}
+    </div>
+  ) : null;
 }
