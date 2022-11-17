@@ -5,6 +5,7 @@ import flask_sock
 import simple_websocket
 
 from . import config
+from . import game
 
 app = flask.Flask(__name__, static_folder="/build")
 sock = flask_sock.Sock(app)
@@ -29,7 +30,7 @@ def serve_app(path: str) -> flask.Response:
 # WebSocket endpoint
 @sock.route("/play")
 def play(ws: simple_websocket.Server) -> None:
-    pass
+    game.play(ws)
 
 
 app.run(host="0.0.0.0", port=config.APP_PORT, debug=config.APP_DEBUG)
