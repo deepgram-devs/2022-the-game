@@ -5,7 +5,7 @@ import logging
 import random
 import string
 import time
-from typing import Any, Callable
+from typing import Any
 
 import deepgram
 import simple_websocket
@@ -77,7 +77,7 @@ class PurchaseTwitterCard(Card):
 class CryptoCard(Card):
     def __init__(self) -> None:
         super().__init__(
-            prompt="You have (accidentally?) invested your entire life savings in Crypto. Bitcoin and ethereum are down and there's no sign of a recovery. Tell us how you're going to explain this to your spouse?",
+            prompt="You have (accidentally?) invested your entire life savings in Crypto. Bitcoin and ethereum are down and there's no sign of a recovery. Give a rambly explaination to your spouse.",
             options={"detect_topics": True},
             timeout=30,
         )
@@ -100,7 +100,10 @@ class CryptoCard(Card):
         )
 
         if len(topics) < 2:
-            return {"type": "failure", "message": "You're deep in the red!"}
+            return {
+                "type": "failure",
+                "message": "Both your pockets and relationship are deep in the red!",
+            }
 
         return {"type": "success", "message": "Nice recovery!"}
 
