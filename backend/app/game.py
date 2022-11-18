@@ -109,6 +109,61 @@ class SpeedTalkingCard(Card):
         return None
 
 
+class YouTubeContentCreatorCard(Card):
+    def __init__(self) -> None:
+
+        super().__init__(
+            prompt=f'You are a content creator and YouTube has cut their ad spend. Encourage your viewers to subscribe, smash that like button, click or hit the bell, etc.',
+            options={},
+            timeout=20,
+            success='Hurray! You got new followers and can continue 2022.',
+            failure='Your channel is now dead. You gotta follow directions - better luck next time!',
+        )
+
+    def validate_response(
+        self, response: deepgram.transcription.PrerecordedTranscriptionResponse
+    ) -> bool:
+        channels = response["results"]["channels"]
+        if not channels:
+            return False
+
+        alternatives = channels[0]["alternatives"]
+        if not alternatives:
+            return False
+
+        words = alternatives[0]["words"]
+        keywords = ['like', 'subscribe', 'bell', 'smash', 'click', 'hit', 'sponsor', 'favor', 'algorithm', 'YouTube', 'content', 'video', 'videos', 'Patreon']
+        count = sum(1 for word in words if word["word"].lower() in keywords)
+        return count >= 5
+        
+        
+class TwitterHardcoreCard(Card):
+    def __init__(self) -> None:
+
+        super().__init__(
+            prompt=f'You survived the Twitter layoffs and were just informed that you now have to be "extremely hardcore" to keep your job. Affirm that you will be "extremely hardcore."',
+            options={},
+            timeout=20,
+            success='Okay, I got it, you are extremely hard core. You can continue 2022.',
+            failure='That wasn''t convincing. You need to be EXTREMELY HARDCORE! Better luck next time!',
+        )
+
+    def validate_response(
+        self, response: deepgram.transcription.PrerecordedTranscriptionResponse
+    ) -> bool:
+        channels = response["results"]["channels"]
+        if not channels:
+            return False
+
+        alternatives = channels[0]["alternatives"]
+        if not alternatives:
+            return False
+        
+        transcript = alternatives[0]['transcript']
+        if 'extremely hardcore' in transcript:
+            return True
+        return False
+
 CARDS: list[Callable[[], Card]] = [SpeedTalkingCard]
 CARD_TIMEOUT = 300
 
