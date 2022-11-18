@@ -47,7 +47,6 @@ export default function GameBoard() {
       const data = JSON.parse(event.data);
       console.log('/play onMessage', data);
     },
-    // shouldReconnect: (closeEvent) => true,
   });
 
   const [state, dispatch] = useReducer(reducer, {
@@ -65,7 +64,6 @@ export default function GameBoard() {
     possibleNextIndex > maxIndex ? maxIndex : possibleNextIndex;
 
   const startAudioStream = useCallback(() => {
-    console.log('send audio_start');
     sendJsonMessage({
       type: 'audio_start',
       mimetype: 'audio/ogg',
@@ -73,14 +71,12 @@ export default function GameBoard() {
   }, []);
 
   const stopAudioStream = useCallback(() => {
-    console.log('send audio_stop');
     sendJsonMessage({
       type: 'audio_stop',
     });
   }, []);
 
   const streamAudio = useCallback((data) => {
-    console.log('stream audio', data);
     sendMessage(data);
   }, []);
 

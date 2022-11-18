@@ -181,6 +181,7 @@ function EventCardDetailsModal({
                 onFail={() => dispatch({ type: 'FAIL' })}
                 startAudioStream={startAudioStream}
                 stopAudioStream={stopAudioStream}
+                streamAudio={streamAudio}
               />
 
               {state.success !== null ? (

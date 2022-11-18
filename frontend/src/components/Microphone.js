@@ -100,8 +100,11 @@ export default function Microphone({
 
   useEffect(() => {
     recorder.addEventListener('dataAvailable', (e) => {
+      // console.log('recorder: ', e.detail);
       // if (readyState === ReadyState.OPEN) {
       // sendMessage(e.detail);
+
+      // const data = convertAudioData(e.detail);
       streamAudio(e.detail);
       // setAudioData((prev) => [...prev, e.detail]);
       // }
@@ -140,6 +143,26 @@ export default function Microphone({
 
   //   // return window.URL.createObjectURL(blob);
   // }, [audioData]);
+
+  const convertAudioData = useCallback((data) => {
+    // const size = 0;
+
+    // data.forEach((e) => {
+    //   size += e.length;
+    // });
+
+    // const big = new Uint8Array(data.length);
+    // let last = 0;
+
+    // data.forEach((e) => {
+    //   big.set(e, last);
+    //   last += e.length;
+    // });
+
+    return new Blob(data, { type: 'audio/ogg' });
+
+    // return window.URL.createObjectURL(blob);
+  }, []);
 
   const startRecording = useCallback(() => {
     // setChunks([]);
