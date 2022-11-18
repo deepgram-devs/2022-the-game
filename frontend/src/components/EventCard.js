@@ -24,6 +24,7 @@ export default function EventCard({
     startAudioStream,
     stopAudioStream,
     streamAudio,
+    completed,
   });
 
   return (
@@ -159,10 +160,11 @@ function EventCardDetailsModal({
   startAudioStream,
   stopAudioStream,
   streamAudio,
+  completed,
   ...props
 }) {
   const [state, dispatch] = useReducer(modalReducer, {
-    success: null,
+    // success: null,
     showGameover: false,
   });
 
@@ -177,16 +179,16 @@ function EventCardDetailsModal({
               <div>{description}</div>
 
               <Microphone
-                onSuccess={() => dispatch({ type: 'SUCCESS' })}
-                onFail={() => dispatch({ type: 'FAIL' })}
+                // onSuccess={() => dispatch({ type: 'SUCCESS' })}
+                // onFail={() => dispatch({ type: 'FAIL' })}
                 startAudioStream={startAudioStream}
                 stopAudioStream={stopAudioStream}
                 streamAudio={streamAudio}
               />
 
-              {state.success !== null ? (
+              {completed !== null ? (
                 <Verdict
-                  success={state.success}
+                  success={completed}
                   onClose={onClose}
                   onFailCtaClick={() => dispatch({ type: 'GAMEOVER' })}
                 />

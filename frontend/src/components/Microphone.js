@@ -1,28 +1,19 @@
 /* global Recorder */
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useReducer,
-  useState,
-  useRef,
-} from 'react';
+import { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { ReactSVG } from 'react-svg';
-import useWebSocket, { ReadyState } from 'react-use-websocket';
 import getSvgPath from '../utils/getSvgPath';
 import Col from './Col';
 import Row from './Row';
-
 
 const reducer = (state, action) => {
   switch (action.type) {
     case 'TOGGLE_RECORDING':
       return { ...state, isRecording: !state.isRecording };
 
-    case 'START_RECORDING':
+    case 'RECORDING_STARTED':
       return { ...state, isRecording: true };
 
-    case 'STOP_RECORDING':
+    case 'RECORDING_STOPPED':
       return { ...state, isRecording: false };
 
     default:
@@ -31,53 +22,13 @@ const reducer = (state, action) => {
 };
 
 export default function Microphone({
-  onSuccess,
-  onFail,
   startAudioStream,
   stopAudioStream,
   streamAudio,
 }) {
   const [state, dispatch] = useReducer(reducer, {
     isRecording: false,
-    transcript: '',
   });
-
-  // const [chunks, setChunks] = useState([]);
-  const [audioData, setAudioData] = useState([]);
-
-  // const transcript = useMemo(
-  //   () =>
-  //     chunks
-  //       .filter((chunk) => chunk.final)
-  //       .map((chunk) => chunk.words.map((c) => c.punctuated_word).join(' '))
-  //       .join(' '),
-  //   [chunks]
-  // );
-
-  // const onMessage = useCallback((event) => {
-  //   const data = JSON.parse(event.data);
-  //   const final = data.is_final;
-  //   const words = data?.channel?.alternatives[0]?.words ?? [];
-
-  //   if (words.length) {
-  //     setChunks((prev) => [...prev, { words, final }]);
-  //   }
-  // }, []);
-
-  // const {
-  //   sendMessage,
-  //   sendJsonMessage,
-  //   lastMessage,
-  //   lastJsonMessage,
-  //   readyState,
-  //   getWebSocket,
-  // } = useWebSocket(WEBSOCKET_URL, {
-  //   protocols: WEBSOCKET_PROTOCOLS,
-  //   onOpen: () => console.log('microphone socket opened'),
-  //   onMessage,
-  //   //Will attempt to reconnect on all close events, such as server shutting down
-  //   shouldReconnect: (closeEvent) => true,
-  // });
 
   const recorder = useMemo(
     () =>
@@ -100,97 +51,30 @@ export default function Microphone({
 
   useEffect(() => {
     recorder.addEventListener('dataAvailable', (e) => {
-      // console.log('recorder: ', e.detail);
-      // if (readyState === ReadyState.OPEN) {
-      // sendMessage(e.detail);
-
-      // const data = convertAudioData(e.detail);
       streamAudio(e.detail);
-      // setAudioData((prev) => [...prev, e.detail]);
-      // }
     });
 
     recorder.initStream();
 
     return () => {
       recorder.stop();
-
-      // Trigger a shutdown flush.
-      // if (readyState === ReadyState.OPEN) {
-      // sendMessage(new Uint8Array(0));
-      // }
     };
   }, [streamAudio]);
 
-  // const saveRecording = useCallback(() => {
-  //   const size = 0;
-
-  //   audioData.forEach((e) => {
-  //     size += e.length;
-  //   });
-
-  //   const big = new Uint8Array(size);
-  //   let last = 0;
-
-  //   audioData.forEach((e) => {
-  //     big.set(e, last);
-  //     last += e.length;
-  //   });
-
-  //   const blob = new Blob(audioData, { type: 'audio/ogg' });
-
-  //   return blob;
-
-  //   // return window.URL.createObjectURL(blob);
-  // }, [audioData]);
-
-  const convertAudioData = useCallback((data) => {
-    // const size = 0;
-
-    // data.forEach((e) => {
-    //   size += e.length;
-    // });
-
-    // const big = new Uint8Array(data.length);
-    // let last = 0;
-
-    // data.forEach((e) => {
-    //   big.set(e, last);
-    //   last += e.length;
-    // });
-
-    return new Blob(data, { type: 'audio/ogg' });
-
-    // return window.URL.createObjectURL(blob);
-  }, []);
-
   const startRecording = useCallback(() => {
-    // setChunks([]);
-    // setAudioData([]);
     recorder.start();
-    dispatch({ type: 'START_RECORDING' });
-
     startAudioStream();
-  }, [recorder]);
+    dispatch({ type: 'RECORDING_STARTED' });
+  }, [recorder, startAudioStream]);
 
   const stopRecording = useCallback(() => {
     recorder.stop();
-
-    // const audio = saveRecording();
-
-    // console.log('audio binary', audio);
-
-    dispatch({ type: 'STOP_RECORDING' });
-
     stopAudioStream();
-  }, [recorder]);
+    dispatch({ type: 'RECORDING_STOPPED' });
+  }, [recorder, stopAudioStream]);
 
   const toggleRecording = useCallback(() => {
-    if (state.isRecording) {
-      stopRecording();
-    } else {
-      startRecording();
-    }
+    state.isRecording ? stopRecording() : startRecording();
   }, [state.isRecording, stopRecording, startRecording]);
 
   return (
@@ -216,32 +100,6 @@ export default function Microphone({
           src={getSvgPath(state.isRecording ? 'pause' : 'microphone')}
         />
       </button>
-
-      <Row>
-        <button style={{ cursor: 'pointer' }} onClick={onSuccess}>
-          Succeed
-        </button>
-
-        <button style={{ cursor: 'pointer' }} onClick={onFail}>
-          Fail
-        </button>
-      </Row>
-
-      {/* <Transcript transcript={transcript} /> */}
     </Col>
   );
-}
-
-
-function Transcript({ transcript }) {
-  return transcript ? (
-    <div
-      style={{
-        padding: '10px 0',
-        fontFamily: 'monospace',
-      }}
-    >
-      {transcript}
-    </div>
-  ) : null;
 }

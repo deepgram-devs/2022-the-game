@@ -7,6 +7,35 @@ import Row from './Row';
 
 const reducer = (state, action) => {
   switch (action.type) {
+    case 'ADD_CARD': {
+      const index = state.events.findIndex((event) => event.eventBody === null);
+      const newEvents = state.events;
+      newEvents[index] = {
+        ...newEvents[index],
+        eventBody: action.description,
+      };
+
+      return {
+        ...state,
+        events: newEvents,
+      };
+    }
+
+    case 'FAILED_CARD': {
+      const index = state.events.findIndex((event) => event.completed === null);
+      const newEvents = state.events;
+      newEvents[index] = {
+        ...newEvents[index],
+        eventBody: action.description,
+        completed: false,
+      };
+
+      return {
+        ...state,
+        events: newEvents,
+      };
+    }
+
     case 'COMPLETED_EVENT':
       return {
         ...state,
@@ -32,7 +61,30 @@ const reducer = (state, action) => {
   }
 };
 
+const WEBSOCKET_URL = 'ws://localhost:8080/play';
+
+const getTitle = (index) =>
+  [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ][index];
+
 export default function GameBoard() {
+  const [state, dispatch] = useReducer(reducer, {
+    events: CARD_DATA,
+    totalScore: 0,
+  });
+
   const {
     sendMessage,
     sendJsonMessage,
@@ -40,18 +92,23 @@ export default function GameBoard() {
     lastJsonMessage,
     readyState,
     getWebSocket,
-  } = useWebSocket('ws://localhost:8080/play', {
+  } = useWebSocket(WEBSOCKET_URL, {
     onOpen: () => console.log('/play socket opened'),
     onClose: () => console.log('/play socket closed'),
     onMessage: (event) => {
       const data = JSON.parse(event.data);
       console.log('/play onMessage', data);
-    },
-  });
 
-  const [state, dispatch] = useReducer(reducer, {
-    events: CARD_DATA,
-    totalScore: 0,
+      switch (data.type) {
+        case 'new_card':
+          dispatch({ type: 'ADD_CARD', description: data.message });
+          break;
+
+        case 'failure':
+          dispatch({ type: 'FAILED_CARD' });
+          break;
+      }
+    },
   });
 
   const lastCompletedEventIndex =
@@ -64,6 +121,7 @@ export default function GameBoard() {
     possibleNextIndex > maxIndex ? maxIndex : possibleNextIndex;
 
   const startAudioStream = useCallback(() => {
+    console.log('sendMessage: audio_start');
     sendJsonMessage({
       type: 'audio_start',
       mimetype: 'audio/ogg',
@@ -71,12 +129,14 @@ export default function GameBoard() {
   }, []);
 
   const stopAudioStream = useCallback(() => {
+    console.log('sendMessage: audio_stop');
     sendJsonMessage({
       type: 'audio_stop',
     });
   }, []);
 
   const streamAudio = useCallback((data) => {
+    console.log('audio stream: ', data);
     sendMessage(data);
   }, []);
 
@@ -95,6 +155,7 @@ export default function GameBoard() {
         <EventCard
           key={eventCard.id}
           {...eventCard}
+          title={getTitle(i)}
           isActive={activeIndex === i}
           startAudioStream={startAudioStream}
           stopAudioStream={stopAudioStream}
