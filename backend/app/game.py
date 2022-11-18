@@ -99,7 +99,7 @@ class CryptoCard(Card):
             {"finance", "banking", "inflation", "stock market", "cryptocurrency"}
         )
 
-        if len(topics) <= 2:
+        if len(topics) < 2:
             return {"type": "failure", "message": "You're deep in the red!"}
 
         return {"type": "success", "message": "Nice recovery!"}
