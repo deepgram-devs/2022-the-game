@@ -14,7 +14,9 @@ from . import config
 
 logger = logging.getLogger(__name__)
 
-deepgram_client = deepgram.Deepgram(config.DEEPGRAM_API_KEY)
+deepgram_client = deepgram.Deepgram(
+    {"api_key": config.DEEPGRAM_API_KEY, "api_url": "https://api.beta.deepgram.com/v1"}
+)
 
 DEFAULT_ERROR_MESSAGE = "I didn't quite catch that."
 
