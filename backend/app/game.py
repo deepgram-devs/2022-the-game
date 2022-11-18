@@ -548,6 +548,39 @@ class CatfishCard(Card):
         }
 
 
+class OscarSlapCard(Card):
+    def __init__(self) -> None:
+
+        super().__init__(
+            prompt=f"Who won what at the 94th Academy Awards? You might not remember, but you most definitely remember that other thing. Now give your best impression of these two: \n\nChris Rock: \nOh, wow. Wow. Will Smith just smacked the **** out of me. \n\nWill Smith: Keep my wife’s name out your **** mouth.",
+            options={"diarize": True},
+            timeout=15,
+        )
+
+    def validate_response(
+        self, response: deepgram.transcription.PrerecordedTranscriptionResponse
+    ) -> dict:
+        channels = response["results"]["channels"]
+        if not channels:
+            return DEFAULT_ERROR
+
+        alternatives = channels[0]["alternatives"]
+        if not alternatives:
+            return DEFAULT_ERROR
+
+        words = alternatives[0]["words"]
+        multispeaker = sum(word["speaker"] for word in words) > 1
+        
+        if multispeaker:
+            return {
+                "type": "success",
+                "message": "You did it! But maybe don't pursue a career in voice acting just yet. Continue 2022.",
+            }
+        return {
+                "type": "failure",
+                "message": "You're not fooling me... all I heard was one person. Better luck next time!",
+            }
+
 AUDIO_START_TIMEOUT = 300
 
 
