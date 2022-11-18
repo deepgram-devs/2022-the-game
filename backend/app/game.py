@@ -45,7 +45,7 @@ class PurchaseTwitterCard(Card):
         super().__init__(
             prompt="You accidentally bought Twitter and your own account drowned in a sea of troll accounts imitating you. Get angry, click the button, and say: “Some people don't like change, but you need to embrace change if the alternative is disaster”",
             options={"analyze_sentiment": True, "sent_thresh": 0.0},
-            timeout=30,
+            timeout=12,
         )
 
     def validate_response(
@@ -79,7 +79,7 @@ class CryptoCard(Card):
         super().__init__(
             prompt="You have (accidentally?) invested your entire life savings in Crypto. Bitcoin and ethereum are down and there's no sign of a recovery. Give a rambly explaination to your spouse.",
             options={"detect_topics": True},
-            timeout=30,
+            timeout=40,
         )
 
     def validate_response(
@@ -122,7 +122,7 @@ class HelloInForeignLanguageCard(Card):
         super().__init__(
             prompt=f"You were born in California but you've been invited to compete for {self.country} in the Beijing Winter Olympics. Say hello in {self.language} ({self.word}).",
             options={"punctuate": False, "language": self.model},
-            timeout=30,
+            timeout=5,
         )
 
     def validate_response(
@@ -509,28 +509,44 @@ class CatfishCard(Card):
         if not alternatives:
             return DEFAULT_ERROR
 
-        target_topics = ['love', 'relationships', 'relationship', 'people', 'family', 'parenting', 'child', 'infants', 'gender', 'men', 'women', 'parents']
+        target_topics = [
+            "love",
+            "relationships",
+            "relationship",
+            "people",
+            "family",
+            "parenting",
+            "child",
+            "infants",
+            "gender",
+            "men",
+            "women",
+            "parents",
+        ]
         relevant = False
         if "topics" in alternatives[0].keys():
             topics = alternatives[0]["topics"]
             print(topics)
             for entry in topics:
-                if len(entry['topics']) > 0:
-                    for topic in entry['topics']:
+                if len(entry["topics"]) > 0:
+                    for topic in entry["topics"]:
                         if topic in target_topics:
                             relevant = True
         words = alternatives[0]["words"]
-        relevant = sum(1 for word in words if word["word"].lower() in target_topics) >= 1
-                
+        relevant = (
+            sum(1 for word in words if word["word"].lower() in target_topics) >= 1
+        )
+
         if relevant:
             return {
                 "type": "success",
                 "message": "Hurray! You know how to talk L.O.V.E babe. Continue 2022.",
             }
         return {
-                "type": "failure",
-                "message": "Really? You weren't really talking about love. Better luck next time!",
-            }
+            "type": "failure",
+            "message": "Really? You weren't really talking about love. Better luck next time!",
+        }
+
 
 AUDIO_START_TIMEOUT = 300
 
