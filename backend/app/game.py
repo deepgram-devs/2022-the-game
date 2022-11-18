@@ -36,7 +36,7 @@ class Card(abc.ABC):
     @abc.abstractmethod
     def validate_response(
         self, response: deepgram.transcription.PrerecordedTranscriptionResponse
-    ) -> bool:
+    ) -> str | None:
         pass
 
 
@@ -46,6 +46,7 @@ class TrappedFamilyCard(Card):
 
         super().__init__(
             prompt=f'You are trapped with family over the holidays and they want to play a game. Try to say over 10 words that start with the letter "{self.letter}"',
+            success="You're a walking dictionary!",
             options={},
             timeout=30,
         )
@@ -73,7 +74,40 @@ class TrappedFamilyCard(Card):
         return None
 
 
-CARDS: list[Callable[[], Card]] = [TrappedFamilyCard]
+class SpeedTalkingCard(Card):
+
+    TWISTERS = [
+        "she sells seashells by the seashore",
+    ]
+
+    def __init__(self) -> None:
+        self.twister = random.choice(self.TWISTERS)
+
+        super().__init__(
+            prompt=f'You are home with another case of COVID and you discover a youtube video of the world\'s fastest talker. See if you can say this tongue twister before time is up: "{self.twister}"',
+            success="Smooth talker!",
+            options={"punctuate": False},
+            timeout=10,
+        )
+
+    def validate_response(
+        self, response: deepgram.transcription.PrerecordedTranscriptionResponse
+    ) -> str | None:
+        channels = response["results"]["channels"]
+        if not channels:
+            return DEFAULT_ERROR_MESSAGE
+
+        alternatives = channels[0]["alternatives"]
+        if not alternatives:
+            return DEFAULT_ERROR_MESSAGE
+
+        transcript = alternatives[0]["transcript"].lower()
+        if self.twister not in transcript:
+            return "Cat got your tongue?"
+        return None
+
+
+CARDS: list[Callable[[], Card]] = [SpeedTalkingCard]
 CARD_TIMEOUT = 300
 
 
