@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 
 deepgram_client = deepgram.Deepgram(config.DEEPGRAM_API_KEY)
 
+DEFAULT_ERROR_MESSAGE = "I didn't quite catch that."
+
 
 class Card(abc.ABC):
     def __init__(
@@ -23,13 +25,11 @@ class Card(abc.ABC):
         *,
         prompt: str,
         success: str = "Success!",
-        failure: str = "Failure!",
         options: deepgram.transcription.PrerecordedOptions,
         timeout: int,
     ) -> None:
         self.prompt = prompt
         self.success = success
-        self.failure = failure
         self.options = options
         self.timeout = timeout
 
@@ -47,23 +47,30 @@ class TrappedFamilyCard(Card):
         super().__init__(
             prompt=f'You are trapped with family over the holidays and they want to play a game. Try to say over 10 words that start with the letter "{self.letter}"',
             options={},
-            timeout=20,
+            timeout=30,
         )
 
     def validate_response(
         self, response: deepgram.transcription.PrerecordedTranscriptionResponse
-    ) -> bool:
+    ) -> str | None:
         channels = response["results"]["channels"]
         if not channels:
-            return False
+            return DEFAULT_ERROR_MESSAGE
 
         alternatives = channels[0]["alternatives"]
         if not alternatives:
-            return False
+            return DEFAULT_ERROR_MESSAGE
 
-        words = alternatives[0]["words"]
-        count = sum(1 for word in words if word["word"].upper().startswith(self.letter))
-        return count >= 10
+        words = set(word["word"].title() for word in alternatives[0]["words"])
+        matching = [word for word in words if word.startswith(self.letter)]
+        count = len(matching)
+        if count <= 0:
+            return "Uh oh! Your vocab might need a little work."
+        if count <= 5:
+            return f"Nice try! You got: {', '.join(matching)}"
+        if count < 10:
+            return f"So close! You got: {', '.join(matching)}"
+        return None
 
 
 CARDS: list[Callable[[], Card]] = [TrappedFamilyCard]
@@ -108,8 +115,9 @@ def play(ws: simple_websocket.Server) -> None:
         )
         logger.info("Received Deepgram response: %s", response)
 
-        if not card.validate_response(response):
-            _send(ws, {"type": "failure", "message": card.failure})
+        error = card.validate_response(response)
+        if error is not None:
+            _send(ws, {"type": "failure", "message": error})
             break
 
         _send(ws, {"type": "success", "message": card.success})
