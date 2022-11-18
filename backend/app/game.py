@@ -18,7 +18,7 @@ deepgram_client = deepgram.Deepgram(
     {"api_key": config.DEEPGRAM_API_KEY, "api_url": "https://api.beta.deepgram.com/v1"}
 )
 
-DEFAULT_ERROR_MESSAGE = "I didn't quite catch that."
+DEFAULT_ERROR = {"type": "failure", "message": "I didn't quite catch that."}
 
 
 class Card(abc.ABC):
@@ -26,19 +26,17 @@ class Card(abc.ABC):
         self,
         *,
         prompt: str,
-        success: str = "Success!",
         options: deepgram.transcription.PrerecordedOptions,
         timeout: int,
     ) -> None:
         self.prompt = prompt
-        self.success = success
         self.options = options
         self.timeout = timeout
 
     @abc.abstractmethod
     def validate_response(
         self, response: deepgram.transcription.PrerecordedTranscriptionResponse
-    ) -> str | None:
+    ) -> dict:
         pass
 
 
@@ -48,32 +46,40 @@ class TrappedFamilyCard(Card):
 
         super().__init__(
             prompt=f'You are trapped with family over the holidays and they want to play a game. Try to say over 10 words that start with the letter "{self.letter}"',
-            success="You're a walking dictionary!",
-            options={},
+            options={"punctuate": False},
             timeout=30,
         )
 
     def validate_response(
         self, response: deepgram.transcription.PrerecordedTranscriptionResponse
-    ) -> str | None:
+    ) -> dict:
         channels = response["results"]["channels"]
         if not channels:
-            return DEFAULT_ERROR_MESSAGE
+            return DEFAULT_ERROR
 
         alternatives = channels[0]["alternatives"]
         if not alternatives:
-            return DEFAULT_ERROR_MESSAGE
+            return DEFAULT_ERROR
 
         words = set(word["word"].title() for word in alternatives[0]["words"])
         matching = [word for word in words if word.startswith(self.letter)]
         count = len(matching)
         if count <= 0:
-            return "Uh oh! Your vocab might need a little work."
+            return {
+                "type": "failure",
+                "message": "Uh oh! Your vocab might need a little work.",
+            }
         if count <= 5:
-            return f"Nice try! You got: {', '.join(matching)}"
+            return {
+                "type": "failure",
+                "message": f"Nice try! You got: {', '.join(matching)}",
+            }
         if count < 10:
-            return f"So close! You got: {', '.join(matching)}"
-        return None
+            return {
+                "type": "failure",
+                "message": f"So close! You got: {', '.join(matching)}",
+            }
+        return {"type": "success", "message": "You're a walking dictionary!"}
 
 
 class SpeedTalkingCard(Card):
@@ -87,82 +93,108 @@ class SpeedTalkingCard(Card):
 
         super().__init__(
             prompt=f'You are home with another case of COVID and you discover a youtube video of the world\'s fastest talker. See if you can say this tongue twister before time is up: "{self.twister}"',
-            success="Smooth talker!",
             options={"punctuate": False},
             timeout=10,
         )
 
     def validate_response(
         self, response: deepgram.transcription.PrerecordedTranscriptionResponse
-    ) -> str | None:
+    ) -> dict:
         channels = response["results"]["channels"]
         if not channels:
-            return DEFAULT_ERROR_MESSAGE
+            return DEFAULT_ERROR
 
         alternatives = channels[0]["alternatives"]
         if not alternatives:
-            return DEFAULT_ERROR_MESSAGE
+            return DEFAULT_ERROR
 
         transcript = alternatives[0]["transcript"].lower()
         if self.twister not in transcript:
-            return "Cat got your tongue?"
-        return None
+            return {"type": "failure", "message": "Cat got your tongue?"}
+        return {"type": "success", "message": "Smooth talker!"}
 
 
 class YouTubeContentCreatorCard(Card):
     def __init__(self) -> None:
-
         super().__init__(
-            prompt=f'You are a content creator and YouTube has cut their ad spend. Encourage your viewers to subscribe, smash that like button, click or hit the bell, etc.',
-            options={},
+            prompt=f"You are a content creator and YouTube has cut their ad spend. Encourage your viewers to subscribe, smash that like button, click or hit the bell, etc.",
+            options={"punctuate": False},
             timeout=20,
-            success='Hurray! You got new followers and can continue 2022.',
-            failure='Your channel is now dead. You gotta follow directions - better luck next time!',
         )
 
     def validate_response(
         self, response: deepgram.transcription.PrerecordedTranscriptionResponse
-    ) -> bool:
+    ) -> dict:
         channels = response["results"]["channels"]
         if not channels:
-            return False
+            return DEFAULT_ERROR
 
         alternatives = channels[0]["alternatives"]
         if not alternatives:
-            return False
+            return DEFAULT_ERROR
 
         words = alternatives[0]["words"]
-        keywords = ['like', 'subscribe', 'bell', 'smash', 'click', 'hit', 'sponsor', 'favor', 'algorithm', 'YouTube', 'content', 'video', 'videos', 'Patreon']
+        keywords = [
+            "like",
+            "subscribe",
+            "bell",
+            "smash",
+            "click",
+            "hit",
+            "sponsor",
+            "favor",
+            "algorithm",
+            "youtube",
+            "content",
+            "video",
+            "videos",
+            "patreon",
+        ]
         count = sum(1 for word in words if word["word"].lower() in keywords)
-        return count >= 5
-        
-        
+
+        if count < 5:
+            return {
+                "type": "failure",
+                "message": "Your channel is now dead. You gotta follow directions - better luck next time!",
+            }
+
+        return {
+            "type": "success",
+            "message": "Hurray! You got new followers and can continue 2022.",
+        }
+
+
 class TwitterHardcoreCard(Card):
     def __init__(self) -> None:
-
         super().__init__(
             prompt=f'You survived the Twitter layoffs and were just informed that you now have to be "extremely hardcore" to keep your job. Affirm that you will be "extremely hardcore."',
-            options={},
+            options={"punctuate": False},
             timeout=20,
-            success='Okay, I got it, you are extremely hard core. You can continue 2022.',
-            failure='That wasn''t convincing. You need to be EXTREMELY HARDCORE! Better luck next time!',
         )
 
     def validate_response(
         self, response: deepgram.transcription.PrerecordedTranscriptionResponse
-    ) -> bool:
+    ) -> dict:
         channels = response["results"]["channels"]
         if not channels:
-            return False
+            return DEFAULT_ERROR
 
         alternatives = channels[0]["alternatives"]
         if not alternatives:
-            return False
-        
-        transcript = alternatives[0]['transcript']
-        if 'extremely hardcore' in transcript:
-            return True
-        return False
+            return DEFAULT_ERROR
+
+        transcript = alternatives[0]["transcript"].lower()
+        if "extremely hardcore" not in transcript:
+            return {
+                "type": "failure",
+                "message": "That wasn't convincing. You need to be EXTREMELY HARDCORE! Better luck next time!",
+            }
+
+        return {
+            "type": "success",
+            "message": "Okay, I got it, you are extremely hard core. You can continue 2022.",
+        }
+
 
 CARDS: list[Callable[[], Card]] = [SpeedTalkingCard]
 CARD_TIMEOUT = 300
@@ -206,12 +238,11 @@ def play(ws: simple_websocket.Server) -> None:
         )
         logger.info("Received Deepgram response: %s", response)
 
-        error = card.validate_response(response)
-        if error is not None:
-            _send(ws, {"type": "failure", "message": error})
+        response = card.validate_response(response)
+        _send(ws, response)
+        if response["type"] == "failure":
             break
 
-        _send(ws, {"type": "success", "message": card.success})
         score += 1
 
     _send(ws, {"type": "game_over", "score": score})
