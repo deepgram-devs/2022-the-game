@@ -486,6 +486,49 @@ class PoliticalLettuceCard(Card):
         }
 
 
+class CatfishCard(Card):
+    def __init__(self) -> None:
+
+        super().__init__(
+            prompt=f"You're pretty sure you're getting catfished on Hinge. Talk to your friends about finding love in 2022.",
+            options={"detect_topics": True},
+            timeout=20,
+        )
+
+    def validate_response(
+        self, response: deepgram.transcription.PrerecordedTranscriptionResponse
+    ) -> dict:
+        channels = response["results"]["channels"]
+        if not channels:
+            return DEFAULT_ERROR
+
+        alternatives = channels[0]["alternatives"]
+        if not alternatives:
+            return DEFAULT_ERROR
+
+        target_topics = ['love', 'relationships', 'relationship', 'people', 'family', 'parenting', 'child', 'infants', 'gender', 'men', 'women', 'parents']
+        relevant = False
+        if "topics" in alternatives[0].keys():
+            topics = alternatives[0]["topics"]
+            print(topics)
+            for entry in topics:
+                if len(entry['topics']) > 0:
+                    for topic in entry['topics']:
+                        if topic in target_topics:
+                            relevant = True
+        words = alternatives[0]["words"]
+        relevant = sum(1 for word in words if word["word"].lower() in target_topics) >= 1
+                
+        if relevant:
+            return {
+                "type": "success",
+                "message": "Hurray! You know how to talk L.O.V.E babe. Continue 2022.",
+            }
+        return {
+                "type": "failure",
+                "message": "Really? You weren't really talking about love. Better luck next time!",
+            }
+
 AUDIO_START_TIMEOUT = 300
 
 
