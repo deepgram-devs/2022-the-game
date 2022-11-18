@@ -86,6 +86,8 @@ class SpeedTalkingCard(Card):
 
     TWISTERS = [
         "she sells seashells by the seashore",
+        "peter piper picked a peck of pickled peppers",
+        "how much wood would a woodchuck chuck if a woodchuck could chuck wood",
     ]
 
     def __init__(self) -> None:
@@ -108,8 +110,13 @@ class SpeedTalkingCard(Card):
         if not alternatives:
             return DEFAULT_ERROR
 
-        transcript = alternatives[0]["transcript"].lower()
-        if self.twister not in transcript:
+        transcript_words = set(
+            word["word"].lower() for word in alternatives[0]["words"]
+        )
+        twister_words = set(self.twister.split())
+        intersection = twister_words.intersection(transcript_words)
+
+        if len(intersection) < len(twister_words) / 2:
             return {"type": "failure", "message": "Cat got your tongue?"}
         return {"type": "success", "message": "Smooth talker!"}
 
