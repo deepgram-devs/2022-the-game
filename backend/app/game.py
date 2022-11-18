@@ -354,13 +354,12 @@ class TwitterMoneyCard(Card):
                 }
 
 
-CARDS: list[Callable[[], Card]] = [PurchaseTwitterCard]
-CARD_TIMEOUT = 300
+AUDIO_START_TIMEOUT = 300
 
 
 def play(ws: simple_websocket.Server) -> None:
     logger.info("Starting game")
-    cards = [c() for c in CARDS]
+    cards = [c() for c in Card.__subclasses__()]
     random.shuffle(cards)
 
     score = 0
@@ -371,7 +370,7 @@ def play(ws: simple_websocket.Server) -> None:
         _send(ws, {"type": "new_card", "message": card.prompt})
 
         card_start = time.time()
-        while (timeout := CARD_TIMEOUT - time.time() + card_start) > 0:
+        while (timeout := AUDIO_START_TIMEOUT - time.time() + card_start) > 0:
             data = _receive(ws, timeout)
             if isinstance(data, dict):
                 if data.get("type") == "audio_start":
