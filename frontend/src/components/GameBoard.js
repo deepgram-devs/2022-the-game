@@ -114,15 +114,6 @@ export default memo(function GameBoard() {
     onMessage,
   });
 
-  const lastCompletedEventIndex =
-    state.events.findIndex((event) => event.completed) ?? 0;
-
-  const possibleNextIndex = lastCompletedEventIndex + 1;
-  const maxIndex = state.events.length - 1;
-
-  const activeIndex =
-    possibleNextIndex > maxIndex ? maxIndex : possibleNextIndex;
-
   const startAudioStream = useCallback(() => {
     console.log('sendMessage: audio_start');
     sendJsonMessage({
@@ -143,6 +134,8 @@ export default memo(function GameBoard() {
     sendMessage(data);
   }, []);
 
+  // console.log('state.events', state.events);
+
   return (
     <div
       style={{
@@ -159,7 +152,7 @@ export default memo(function GameBoard() {
           key={eventCard.id}
           {...eventCard}
           score={state.score}
-          isActive={activeIndex === i}
+          isActive={state.currentCardIndex === i}
           startAudioStream={startAudioStream}
           stopAudioStream={stopAudioStream}
           streamAudio={streamAudio}
