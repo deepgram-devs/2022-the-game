@@ -14,10 +14,16 @@ export default function EventCard({
   eventBody,
   completed,
   isActive,
+  startAudioStream,
+  stopAudioStream,
+  streamAudio,
 }) {
   const [hoverRef, isHovered] = useHover();
   const [showModal] = useModal(EventCardDetailsModal, {
     description: eventBody,
+    startAudioStream,
+    stopAudioStream,
+    streamAudio,
   });
 
   return (
@@ -149,7 +155,12 @@ const modalReducer = (state, action) => {
   }
 };
 
-function EventCardDetailsModal(props) {
+function EventCardDetailsModal({
+  startAudioStream,
+  stopAudioStream,
+  streamAudio,
+  ...props
+}) {
   const [state, dispatch] = useReducer(modalReducer, {
     success: null,
     showGameover: false,
@@ -168,6 +179,8 @@ function EventCardDetailsModal(props) {
               <Microphone
                 onSuccess={() => dispatch({ type: 'SUCCESS' })}
                 onFail={() => dispatch({ type: 'FAIL' })}
+                startAudioStream={startAudioStream}
+                stopAudioStream={stopAudioStream}
               />
 
               {state.success !== null ? (

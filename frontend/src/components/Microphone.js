@@ -47,48 +47,54 @@ const reducer = (state, action) => {
   }
 };
 
-export default function Microphone({ onSuccess, onFail }) {
+export default function Microphone({
+  onSuccess,
+  onFail,
+  startAudioStream,
+  stopAudioStream,
+  streamAudio,
+}) {
   const [state, dispatch] = useReducer(reducer, {
     isRecording: false,
     transcript: '',
   });
 
-  const [chunks, setChunks] = useState([]);
+  // const [chunks, setChunks] = useState([]);
   const [audioData, setAudioData] = useState([]);
 
-  const transcript = useMemo(
-    () =>
-      chunks
-        .filter((chunk) => chunk.final)
-        .map((chunk) => chunk.words.map((c) => c.punctuated_word).join(' '))
-        .join(' '),
-    [chunks]
-  );
+  // const transcript = useMemo(
+  //   () =>
+  //     chunks
+  //       .filter((chunk) => chunk.final)
+  //       .map((chunk) => chunk.words.map((c) => c.punctuated_word).join(' '))
+  //       .join(' '),
+  //   [chunks]
+  // );
 
-  const onMessage = useCallback((event) => {
-    const data = JSON.parse(event.data);
-    const final = data.is_final;
-    const words = data?.channel?.alternatives[0]?.words ?? [];
+  // const onMessage = useCallback((event) => {
+  //   const data = JSON.parse(event.data);
+  //   const final = data.is_final;
+  //   const words = data?.channel?.alternatives[0]?.words ?? [];
 
-    if (words.length) {
-      setChunks((prev) => [...prev, { words, final }]);
-    }
-  }, []);
+  //   if (words.length) {
+  //     setChunks((prev) => [...prev, { words, final }]);
+  //   }
+  // }, []);
 
-  const {
-    sendMessage,
-    sendJsonMessage,
-    lastMessage,
-    lastJsonMessage,
-    readyState,
-    getWebSocket,
-  } = useWebSocket(WEBSOCKET_URL, {
-    protocols: WEBSOCKET_PROTOCOLS,
-    onOpen: () => console.log('microphone socket opened'),
-    onMessage,
-    //Will attempt to reconnect on all close events, such as server shutting down
-    shouldReconnect: (closeEvent) => true,
-  });
+  // const {
+  //   sendMessage,
+  //   sendJsonMessage,
+  //   lastMessage,
+  //   lastJsonMessage,
+  //   readyState,
+  //   getWebSocket,
+  // } = useWebSocket(WEBSOCKET_URL, {
+  //   protocols: WEBSOCKET_PROTOCOLS,
+  //   onOpen: () => console.log('microphone socket opened'),
+  //   onMessage,
+  //   //Will attempt to reconnect on all close events, such as server shutting down
+  //   shouldReconnect: (closeEvent) => true,
+  // });
 
   const recorder = useMemo(
     () =>
@@ -111,10 +117,11 @@ export default function Microphone({ onSuccess, onFail }) {
 
   useEffect(() => {
     recorder.addEventListener('dataAvailable', (e) => {
-      if (readyState === ReadyState.OPEN) {
-        sendMessage(e.detail);
-        setAudioData((prev) => [...prev, e.detail]);
-      }
+      // if (readyState === ReadyState.OPEN) {
+      // sendMessage(e.detail);
+      streamAudio(e.detail);
+      // setAudioData((prev) => [...prev, e.detail]);
+      // }
     });
 
     recorder.initStream();
@@ -123,49 +130,53 @@ export default function Microphone({ onSuccess, onFail }) {
       recorder.stop();
 
       // Trigger a shutdown flush.
-      if (readyState === ReadyState.OPEN) {
-        sendMessage(new Uint8Array(0));
-      }
+      // if (readyState === ReadyState.OPEN) {
+      // sendMessage(new Uint8Array(0));
+      // }
     };
-  }, [sendMessage, readyState]);
+  }, [streamAudio]);
 
-  const saveRecording = useCallback(() => {
-    const size = 0;
+  // const saveRecording = useCallback(() => {
+  //   const size = 0;
 
-    audioData.forEach((e) => {
-      size += e.length;
-    });
+  //   audioData.forEach((e) => {
+  //     size += e.length;
+  //   });
 
-    const big = new Uint8Array(size);
-    let last = 0;
+  //   const big = new Uint8Array(size);
+  //   let last = 0;
 
-    audioData.forEach((e) => {
-      big.set(e, last);
-      last += e.length;
-    });
+  //   audioData.forEach((e) => {
+  //     big.set(e, last);
+  //     last += e.length;
+  //   });
 
-    const blob = new Blob(audioData, { type: 'audio/ogg' });
+  //   const blob = new Blob(audioData, { type: 'audio/ogg' });
 
-    return blob;
+  //   return blob;
 
-    // return window.URL.createObjectURL(blob);
-  }, [audioData]);
+  //   // return window.URL.createObjectURL(blob);
+  // }, [audioData]);
 
   const startRecording = useCallback(() => {
-    setChunks([]);
-    setAudioData([]);
+    // setChunks([]);
+    // setAudioData([]);
     recorder.start();
     dispatch({ type: 'START_RECORDING' });
+
+    startAudioStream();
   }, [recorder]);
 
   const stopRecording = useCallback(() => {
     recorder.stop();
 
-    const audio = saveRecording();
+    // const audio = saveRecording();
 
-    console.log('audio binary', audio);
+    // console.log('audio binary', audio);
 
     dispatch({ type: 'STOP_RECORDING' });
+
+    stopAudioStream();
   }, [recorder]);
 
   const toggleRecording = useCallback(() => {
@@ -210,7 +221,7 @@ export default function Microphone({ onSuccess, onFail }) {
         </button>
       </Row>
 
-      <Transcript transcript={transcript} />
+      {/* <Transcript transcript={transcript} /> */}
     </Col>
   );
 }

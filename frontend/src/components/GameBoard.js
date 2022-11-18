@@ -1,4 +1,4 @@
-import { useReducer } from 'react';
+import { useCallback, useReducer } from 'react';
 import { useWebSocket } from 'react-use-websocket/dist/lib/use-websocket';
 import CARD_DATA from '../CardData';
 import getSvgPath from '../utils/getSvgPath';
@@ -33,11 +33,6 @@ const reducer = (state, action) => {
 };
 
 export default function GameBoard() {
-  // TODO: send message when audio recording starts
-  // {
-  //   "type": "audio_start",
-  //   "mimetype:" "<audio mimetype>"
-  // }
   const {
     sendMessage,
     sendJsonMessage,
@@ -52,6 +47,7 @@ export default function GameBoard() {
       const data = JSON.parse(event.data);
       console.log('/play onMessage', data);
     },
+    // shouldReconnect: (closeEvent) => true,
   });
 
   const [state, dispatch] = useReducer(reducer, {
@@ -67,6 +63,26 @@ export default function GameBoard() {
 
   const activeIndex =
     possibleNextIndex > maxIndex ? maxIndex : possibleNextIndex;
+
+  const startAudioStream = useCallback(() => {
+    console.log('send audio_start');
+    sendJsonMessage({
+      type: 'audio_start',
+      mimetype: 'audio/ogg',
+    });
+  }, []);
+
+  const stopAudioStream = useCallback(() => {
+    console.log('send audio_stop');
+    sendJsonMessage({
+      type: 'audio_stop',
+    });
+  }, []);
+
+  const streamAudio = useCallback((data) => {
+    console.log('stream audio', data);
+    sendMessage(data);
+  }, []);
 
   return (
     <div
@@ -84,6 +100,9 @@ export default function GameBoard() {
           key={eventCard.id}
           {...eventCard}
           isActive={activeIndex === i}
+          startAudioStream={startAudioStream}
+          stopAudioStream={stopAudioStream}
+          streamAudio={streamAudio}
           onPass={(event) => {
             dispatch({ type: 'COMPLETED_EVENT', event });
           }}

@@ -4,17 +4,6 @@ import { ReactSVG } from 'react-svg';
 import { ModalProvider } from 'use-modal-hook';
 import getSvgPath from './utils/getSvgPath';
 
-/**
- * TODOs
- * - state management (reducer) for game progress
- * - save state to local storage
- * - microphone recording reducer?
- *
- * COMPLETED_LEVEL
- *
- *
- */
-
 function App() {
   return (
     <ModalProvider>
