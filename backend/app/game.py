@@ -227,7 +227,7 @@ class YouTubeContentCreatorCard(Card):
         super().__init__(
             prompt="You are a content creator and YouTube has cut their ad spend. Encourage your viewers to subscribe, smash that like button, click or hit the bell, etc.",
             options={"punctuate": False},
-            timeout=20,
+            timeout=10,
         )
 
     def validate_response(
@@ -277,7 +277,7 @@ class TwitterHardcoreCard(Card):
         super().__init__(
             prompt="You survived the Twitter layoffs and were just informed that you now have to be “extremely hardcore” to keep your job. Affirm that you will be “extremely hardcore.”",
             options={"punctuate": False},
-            timeout=20,
+            timeout=10,
         )
 
     def validate_response(
@@ -310,7 +310,7 @@ class TwitterMoneyCard(Card):
         super().__init__(
             prompt=f"You want to become verified on Twitter. Tell me who you are, and pay me $20 dollars. Too much? Fine. $8.",
             options={"detect_entities": True},
-            timeout=20,
+            timeout=10,
         )
 
     def validate_response(
@@ -360,7 +360,7 @@ class OverbookedFlightCard(Card):
         super().__init__(
             prompt=f"You overbooked a flight and now you have angry passengers. Put a positive spin on telling them that you won't be paying for their hotel rooms either.",
             options={"analyze_sentiment": True, "detect_topics": True},
-            timeout=20,
+            timeout=10,
         )
 
     def validate_response(
@@ -394,7 +394,7 @@ class OverbookedFlightCard(Card):
                         if topic in target_topics:
                             relevant = True
         words = alternatives[0]["words"]
-        relevant = sum(1 for word in words if word["word"].lower() in target_topics) > 1
+        relevant = sum(1 for word in words if word["word"].lower() in target_topics) >= 1
                 
         if naiive_aggregate_sentiment > 0 and relevant:
             return {
@@ -416,6 +416,52 @@ class OverbookedFlightCard(Card):
                 "type": "failure",
                 "message": "That was neither positive nor on track for the right topics. Better luck next time!",
             }
+
+
+class PoliticalLettuceCard(Card):
+    def __init__(self) -> None:
+
+        super().__init__(
+            prompt=f"You cut taxes for the rich and accidentally tanked the British pound. To make matters worse, now everyone compares you to a head of lettuce. Insist that your political career will last longer than a wilting head of lettuce.",
+            options={"detect_topics": True},
+            timeout=10,
+        )
+
+    def validate_response(
+        self, response: deepgram.transcription.PrerecordedTranscriptionResponse
+    ) -> dict:
+        channels = response["results"]["channels"]
+        if not channels:
+            return DEFAULT_ERROR
+
+        alternatives = channels[0]["alternatives"]
+        if not alternatives:
+            return DEFAULT_ERROR
+
+        target_topics = ['vegetables', 'vegetable', 'food', 'diet', 'fruit', 'nutrition', 'health', 'cooking', 'candy', 'lettuce']
+        relevant = False
+        if "topics" in alternatives[0].keys():
+            topics = alternatives[0]["topics"]
+            print(topics)
+            for entry in topics:
+                if len(entry['topics']) > 0:
+                    for topic in entry['topics']:
+                        if topic in target_topics:
+                            relevant = True
+        words = alternatives[0]["words"]
+        relevant = sum(1 for word in words if word["word"].lower() in target_topics) >= 1
+                
+        if relevant:
+            return {
+                "type": "success",
+                "message": "Hurray! You know your veggetables and can continue 2022.",
+            }
+        return {
+                "type": "failure",
+                "message": "You did not talk enough about lettuce. Or any vegetables, really. Better luck next time!",
+            }
+
+            
 
 AUDIO_START_TIMEOUT = 300
 
