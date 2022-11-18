@@ -241,6 +241,52 @@ class TwitterHardcoreCard(Card):
         }
 
 
+class TwitterMoneyCard(Card):
+    def __init__(self) -> None:
+
+        super().__init__(
+            prompt=f'You want to become verified on Twitter. Tell me who you are, and pay me $20 dollars. Too much? Fine. $8.',
+            options={'detect_entities': True},
+            timeout=20,
+        )
+
+    def validate_response(
+        self, response: deepgram.transcription.PrerecordedTranscriptionResponse
+    ) -> bool:
+        channels = response["results"]["channels"]
+        if not channels:
+            return False
+
+        alternatives = channels[0]["alternatives"]
+        if not alternatives:
+            return False
+        
+        
+        transcript = alternatives[0]['transcript']
+        if transcript == '':
+            return {
+                "type": "success",
+                "message": "You said nothing and I don't know who you are. But maybe that's the whole point? You can continue 2022.",
+            }
+        
+        if 'entities' in alternatives[0].keys():
+            entities = alternatives[0]['entities']
+            if len(entities) > 1:
+                return {
+                    "type": "success",
+                    "message": "At first I heard you say you are {}, but then I thought I heard something else. Anyways, you can continue 2022.".format(entities[0]['value']),
+                }
+            elif len(entities) == 1:
+                return {
+                    "type": "success",
+                    "message": "So you are {}. Yes, I totally believe you. You can continue 2022.".format(entities[0]['value']),
+                }
+            else:
+                return {
+                    "type": "success",
+                    "message": "You said something but told me nothing about who you are. But maybe that's the whole point? You can continue 2022.",
+                }
+
 CARDS: list[Callable[[], Card]] = [HelloInForeignLanguageCard]
 CARD_TIMEOUT = 300
 
