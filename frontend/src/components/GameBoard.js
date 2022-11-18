@@ -26,7 +26,7 @@ const reducer = (state, action) => {
       const newEvents = state.events;
       newEvents[index] = {
         ...newEvents[index],
-        eventBody: action.description,
+        failMessage: action.message,
         completed: false,
       };
 
@@ -105,7 +105,7 @@ export default function GameBoard() {
           break;
 
         case 'failure':
-          dispatch({ type: 'FAILED_CARD' });
+          dispatch({ type: 'FAILED_CARD', message: data.message });
           break;
       }
     },
@@ -136,9 +136,11 @@ export default function GameBoard() {
   }, []);
 
   const streamAudio = useCallback((data) => {
-    console.log('audio stream: ', data);
+    // console.log('audio stream: ', data);
     sendMessage(data);
   }, []);
+
+  // console.log('state.events', state.events);
 
   return (
     <div

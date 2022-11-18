@@ -1,5 +1,5 @@
 import { ReactSVG } from 'react-svg';
-import { Fragment, useReducer } from 'react';
+import { Fragment, useEffect, useReducer, useState } from 'react';
 import Col from './Col';
 import useHover from '../hooks/useHover';
 import { useModal } from 'use-modal-hook';
@@ -8,10 +8,34 @@ import Microphone from './Microphone';
 import BaseModal from './BaseModal';
 import getSvgPath from '../utils/getSvgPath';
 import PrimaryButton from './PrimaryButton';
+import Modal from 'react-modal';
+
+const MODAL_STYLES = {
+  overlay: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  content: {
+    color: '#f8f8f8',
+    backgroundColor: '#1a2532',
+    width: '500px',
+    top: '50%',
+    left: '50%',
+    right: 'auto',
+    bottom: 'auto',
+    marginRight: '-50%',
+    transform: 'translate(-50%, -50%)',
+    borderRadius: '10px',
+    border: 0,
+    whiteSpace: 'pre-wrap',
+    lineHeight: '24px',
+  },
+};
 
 export default function EventCard({
   eventTitle,
   eventBody,
+  failMessage,
+  successMessage,
   completed,
   isActive,
   startAudioStream,
@@ -19,44 +43,96 @@ export default function EventCard({
   streamAudio,
 }) {
   const [hoverRef, isHovered] = useHover();
-  const [showModal] = useModal(EventCardDetailsModal, {
-    description: eventBody,
-    startAudioStream,
-    stopAudioStream,
-    streamAudio,
-    completed,
+  const [modalIsOpen, setIsOpen] = useState(false);
+
+  function openModal() {
+    setIsOpen(true);
+  }
+
+  function closeModal() {
+    setIsOpen(false);
+  }
+
+  const [state, dispatch] = useReducer(modalReducer, {
+    showGameover: false,
   });
 
   return (
-    <Col
-      ref={hoverRef}
-      alignItems="center"
-      justifyContent="center"
-      style={{
-        gap: '8px',
-        cursor: isActive ? 'pointer' : 'default',
-      }}
-      onClick={isActive ? showModal : () => {}}
-    >
-      <span
+    <Fragment>
+      <Col
+        ref={hoverRef}
+        alignItems="center"
+        justifyContent="center"
         style={{
-          textTransform: 'uppercase',
-          fontWeight: 'bold',
-          transition: 'color 350ms',
-          color: isActive && isHovered ? '#fd5c5c' : '#f8f8f8',
+          gap: '8px',
+          cursor: isActive ? 'pointer' : 'default',
         }}
+        onClick={isActive ? openModal : () => {}}
       >
-        {eventTitle}
-      </span>
+        <span
+          style={{
+            textTransform: 'uppercase',
+            fontWeight: 'bold',
+            transition: 'color 350ms',
+            color: isActive && isHovered ? '#fd5c5c' : '#f8f8f8',
+          }}
+        >
+          {eventTitle}
+        </span>
 
-      {completed ? (
-        <CompletedEventCard />
-      ) : isActive ? (
-        <ActiveEventCard isHovered={isHovered} />
-      ) : (
-        <LockedEventCard />
-      )}
-    </Col>
+        {completed ? (
+          <CompletedEventCard />
+        ) : isActive ? (
+          <ActiveEventCard isHovered={isHovered} />
+        ) : (
+          <LockedEventCard />
+        )}
+      </Col>
+      <Modal
+        isOpen={modalIsOpen}
+        onRequestClose={closeModal}
+        style={MODAL_STYLES}
+      >
+        <Row justifyContent="flex-end">
+          <button
+            style={{
+              cursor: 'pointer',
+              background: 'none',
+              border: 'none',
+              padding: 0,
+            }}
+            onClick={closeModal}
+          >
+            <ReactSVG src={getSvgPath('close')} />
+          </button>
+        </Row>
+
+        <div style={{ padding: '10px' }}>
+          {state.showGameover ? (
+            <Gameover />
+          ) : (
+            <Col style={{ gap: '30px' }}>
+              <div>{eventBody}</div>
+
+              <Microphone
+                startAudioStream={startAudioStream}
+                stopAudioStream={stopAudioStream}
+                streamAudio={streamAudio}
+              />
+
+              {completed !== null ? (
+                <Verdict
+                  message={completed ? successMessage : failMessage}
+                  success={completed}
+                  onClose={closeModal}
+                  onFailCtaClick={() => dispatch({ type: 'GAMEOVER' })}
+                />
+              ) : null}
+            </Col>
+          )}
+        </div>
+      </Modal>
+    </Fragment>
   );
 }
 
@@ -156,51 +232,6 @@ const modalReducer = (state, action) => {
   }
 };
 
-function EventCardDetailsModal({
-  startAudioStream,
-  stopAudioStream,
-  streamAudio,
-  completed,
-  ...props
-}) {
-  const [state, dispatch] = useReducer(modalReducer, {
-    // success: null,
-    showGameover: false,
-  });
-
-  return (
-    <BaseModal {...props}>
-      {({ description, onClose }) =>
-        state.showGameover ? (
-          <Gameover />
-        ) : (
-          <Fragment>
-            <Col style={{ gap: '30px' }}>
-              <div>{description}</div>
-
-              <Microphone
-                // onSuccess={() => dispatch({ type: 'SUCCESS' })}
-                // onFail={() => dispatch({ type: 'FAIL' })}
-                startAudioStream={startAudioStream}
-                stopAudioStream={stopAudioStream}
-                streamAudio={streamAudio}
-              />
-
-              {completed !== null ? (
-                <Verdict
-                  success={completed}
-                  onClose={onClose}
-                  onFailCtaClick={() => dispatch({ type: 'GAMEOVER' })}
-                />
-              ) : null}
-            </Col>
-          </Fragment>
-        )
-      }
-    </BaseModal>
-  );
-}
-
 function Gameover() {
   return (
     <Col alignItems="center" justifyContent="center" style={{ gap: '20px' }}>
@@ -247,17 +278,19 @@ function Gameover() {
           justifyContent="center"
           style={{ marginTop: '20px' }}
         >
-          Play again
+          <a href="/app" style={{ color: '#96A2FF', textDecoration: 'none' }}>
+            Play again
+          </a>
         </Row>
       </Col>
     </Col>
   );
 }
 
-function Verdict({ success, onClose, onFailCtaClick }) {
+function Verdict({ message, success, onClose, onFailCtaClick }) {
   return (
-    <Col alignItems="center">
-      <Row style={{ width: '100%' }}>
+    <Col style={{ width: '100%' }} alignItems="center">
+      <Row style={{ alignSelf: 'flex-start' }}>
         <h3
           style={{
             color: '#7F94AD',
@@ -269,16 +302,16 @@ function Verdict({ success, onClose, onFailCtaClick }) {
         </h3>
       </Row>
 
-      <Row style={{ gap: '20px' }} alignItems="center" justifyContent="center">
+      <Row
+        style={{ gap: '20px', alignSelf: 'flex-start' }}
+        alignItems="center"
+        justifyContent="center"
+      >
         <ReactSVG
           src={getSvgPath(success ? 'thumbs-up-button' : 'thumbs-down-button')}
         />
 
-        <span css={{ maxWidth: '75%' }}>
-          {success
-            ? 'Hooray! You were angry enough and can continue 2022.'
-            : 'You were not angry enough. Better luck next time!'}
-        </span>
+        <span css={{ maxWidth: '75%' }}>{message}</span>
       </Row>
 
       <PrimaryButton
