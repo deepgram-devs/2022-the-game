@@ -51,48 +51,12 @@ const reducer = (state, action) => {
       };
     }
 
-    case 'COMPLETED_EVENT':
-      return {
-        ...state,
-        totalScore: state.totalScore + action.event.score,
-        events: state.events.map((event) => {
-          return event.id === action.event.id
-            ? { ...event, completed: true, score: action.event.score }
-            : event;
-        }),
-      };
-
-    case 'FAILED_EVENT':
-      return {
-        ...state,
-        events: state.events.map((event) => {
-          return event.id === action.event.id
-            ? { ...event, completed: false }
-            : event;
-        }),
-      };
     default:
       return state;
   }
 };
 
 const WEBSOCKET_URL = 'ws://localhost:8080/play';
-
-const getTitle = (index) =>
-  [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ][index];
 
 export default memo(function GameBoard() {
   const [state, dispatch] = useReducer(reducer, {
@@ -169,8 +133,6 @@ export default memo(function GameBoard() {
     sendMessage(data);
   }, []);
 
-  console.log('state.events', state.events);
-
   return (
     <div
       style={{
@@ -186,17 +148,10 @@ export default memo(function GameBoard() {
         <EventCard
           key={eventCard.id}
           {...eventCard}
-          title={getTitle(i)}
           isActive={activeIndex === i}
           startAudioStream={startAudioStream}
           stopAudioStream={stopAudioStream}
           streamAudio={streamAudio}
-          onPass={(event) => {
-            dispatch({ type: 'COMPLETED_EVENT', event });
-          }}
-          onFail={(event) => {
-            dispatch({ type: 'FAILED_EVENT', event });
-          }}
         />
       ))}
 

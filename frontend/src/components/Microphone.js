@@ -7,9 +7,6 @@ import Row from './Row';
 
 const reducer = (state, action) => {
   switch (action.type) {
-    case 'TOGGLE_RECORDING':
-      return { ...state, isRecording: !state.isRecording };
-
     case 'RECORDING_STARTED':
       return { ...state, isRecording: true };
 
