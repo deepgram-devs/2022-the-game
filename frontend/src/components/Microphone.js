@@ -13,23 +13,6 @@ import getSvgPath from '../utils/getSvgPath';
 import Col from './Col';
 import Row from './Row';
 
-/**
- * START_RECORDING
- * STOP_RECORDING
- * SUBMITTING
- * ON_SUBMIT_SUCCESS
- * ON_SUBMIT_FAIL
- * ON_LEVEL_SUCCESS
- * ON_LEVEL_FAIL
- *
- */
-
-const SAMPLE_RATE = 16000;
-const WEBSOCKET_URL = `wss://cab2b5852c84ae12.deepgram.com/v2/listen/stream?punctuate=true&model=general-dQw4w9WgXcQ&encoding=ogg-opus&sample_rate=${SAMPLE_RATE}`;
-const WEBSOCKET_PROTOCOLS = [
-  'Basic',
-  'R1dnVWh0S1VhNnBiNkNnQjg0OEI2QTpPbFpkd0IyanhWOVNBM0dOdzZYOFJ3',
-];
 
 const reducer = (state, action) => {
   switch (action.type) {
