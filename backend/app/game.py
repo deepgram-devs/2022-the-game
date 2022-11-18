@@ -40,6 +40,35 @@ class Card(abc.ABC):
         pass
 
 
+class CryptoCard(Card):
+    def __init__(self):
+        super().__init__(
+            prompt="You have (accidentally?) invested your entire life savings in Crypto. Bitcoin and ethereum are down and there's no sign of a recovery. Tell us how you're going to explain this to your spouse?",
+            options={"detect_topics": True},
+            timeout=30,
+        )
+
+    def validate_response(
+        self, response: deepgram.transcription.PrerecordedTranscriptionResponse
+    ) -> dict:
+        channels = response["results"]["channels"]
+        if not channels:
+            return DEFAULT_ERROR
+
+        alternatives = channels[0]["alternatives"]
+        if not alternatives:
+            return DEFAULT_ERROR
+
+        topics = alternatives[0].get("topics") or []
+        topics = {topic2 for topic1 in topics for topic2 in topic1["topics"]}
+        topics = topics.intersection({"finance", "economy", "cryptocurrency"})
+
+        if len(topics) < 2:
+            return {"type": "failure", "message": "You're deep in the red!"}
+
+        return {"type": "success", "message": "Nice recovery!"}
+
+
 class HelloInForeignLanguageCard(Card):
 
     OPTIONS = [
@@ -245,41 +274,44 @@ class TwitterMoneyCard(Card):
     def __init__(self) -> None:
 
         super().__init__(
-            prompt=f'You want to become verified on Twitter. Tell me who you are, and pay me $20 dollars. Too much? Fine. $8.',
-            options={'detect_entities': True},
+            prompt=f"You want to become verified on Twitter. Tell me who you are, and pay me $20 dollars. Too much? Fine. $8.",
+            options={"detect_entities": True},
             timeout=20,
         )
 
     def validate_response(
         self, response: deepgram.transcription.PrerecordedTranscriptionResponse
-    ) -> bool:
+    ) -> dict:
         channels = response["results"]["channels"]
         if not channels:
-            return False
+            return DEFAULT_ERROR
 
         alternatives = channels[0]["alternatives"]
         if not alternatives:
-            return False
-        
-        
-        transcript = alternatives[0]['transcript']
-        if transcript == '':
+            return DEFAULT_ERROR
+
+        transcript = alternatives[0]["transcript"]
+        if transcript == "":
             return {
                 "type": "success",
                 "message": "You said nothing and I don't know who you are. But maybe that's the whole point? You can continue 2022.",
             }
-        
-        if 'entities' in alternatives[0].keys():
-            entities = alternatives[0]['entities']
+
+        if "entities" in alternatives[0].keys():
+            entities = alternatives[0]["entities"]
             if len(entities) > 1:
                 return {
                     "type": "success",
-                    "message": "At first I heard you say you are {}, but then I thought I heard something else. Anyways, you can continue 2022.".format(entities[0]['value']),
+                    "message": "At first I heard you say you are {}, but then I thought I heard something else. Anyways, you can continue 2022.".format(
+                        entities[0]["value"]
+                    ),
                 }
             elif len(entities) == 1:
                 return {
                     "type": "success",
-                    "message": "So you are {}. Yes, I totally believe you. You can continue 2022.".format(entities[0]['value']),
+                    "message": "So you are {}. Yes, I totally believe you. You can continue 2022.".format(
+                        entities[0]["value"]
+                    ),
                 }
             else:
                 return {
@@ -287,7 +319,8 @@ class TwitterMoneyCard(Card):
                     "message": "You said something but told me nothing about who you are. But maybe that's the whole point? You can continue 2022.",
                 }
 
-CARDS: list[Callable[[], Card]] = [HelloInForeignLanguageCard]
+
+CARDS: list[Callable[[], Card]] = [CryptoCard]
 CARD_TIMEOUT = 300
 
 
