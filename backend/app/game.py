@@ -67,7 +67,7 @@ class TrappedFamilyCard(Card):
 
 
 CARDS: list[Callable[[], Card]] = [TrappedFamilyCard]
-START_RECORDING_TIMEOUT = 300
+CARD_TIMEOUT = 300
 
 
 def play(ws: simple_websocket.Server) -> None:
@@ -82,9 +82,8 @@ def play(ws: simple_websocket.Server) -> None:
 
         _send(ws, {"type": "new_card", "message": card.prompt})
 
-        start = time.time()
-        mimetype = "audio/ogg"
-        while (timeout := START_RECORDING_TIMEOUT - time.time() + start) > 0:
+        card_start = time.time()
+        while (timeout := CARD_TIMEOUT - time.time() + card_start) > 0:
             data = _receive(ws, timeout)
             if isinstance(data, dict):
                 if data.get("type") == "audio_start":
@@ -95,8 +94,8 @@ def play(ws: simple_websocket.Server) -> None:
             break
 
         buffer = bytearray()
-        start = time.time()
-        while (timeout := card.timeout - time.time() + start) > 0:
+        audio_start = time.time()
+        while (timeout := card.timeout - time.time() + audio_start) > 0:
             data = _receive(ws, timeout)
             if not isinstance(data, bytes):
                 break
