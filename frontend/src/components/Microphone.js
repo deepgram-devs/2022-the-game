@@ -87,7 +87,7 @@ export default function Microphone({
         numberOfChannels: 1,
 
         // OPUS options
-        encoderSampleRate: SAMPLE_RATE,
+        encoderSampleRate: 16000,
         streamPages: true,
         maxBuffersPerPage: 1,
         //originalSampleRateOverride: sampleRate,
