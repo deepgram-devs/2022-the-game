@@ -5,7 +5,7 @@ import logging
 import random
 import string
 import time
-from typing import Callable
+from typing import Any, Callable
 
 import deepgram
 import simple_websocket
@@ -80,14 +80,13 @@ def play(ws: simple_websocket.Server) -> None:
         card = cards.pop(0)
         logger.info("Selected card: %s", type(card).__name__)
 
-        ws.send(json.dumps({"type": "new_card", "message": card.prompt}))
+        _send(ws, {"type": "new_card", "message": card.prompt})
 
         start = time.time()
         mimetype = "audio/ogg"
         while (timeout := START_RECORDING_TIMEOUT - time.time() + start) > 0:
-            data = ws.receive(timeout)
-            if isinstance(data, str):
-                data = json.loads(data)
+            data = _receive(ws, timeout)
+            if isinstance(data, dict):
                 if data.get("type") == "audio_start":
                     mimetype = data.get("mimetype")
                     break
@@ -98,10 +97,11 @@ def play(ws: simple_websocket.Server) -> None:
         buffer = bytearray()
         start = time.time()
         while (timeout := card.timeout - time.time() + start) > 0:
-            data = ws.receive(timeout)
+            data = _receive(ws, timeout)
             if not isinstance(data, bytes):
                 break
             buffer.extend(data)
+        logger.info("Received %s bytes of audio", len(buffer))
 
         source = {"buffer": buffer, "mimetype": mimetype}
         response = asyncio.run(
@@ -110,13 +110,28 @@ def play(ws: simple_websocket.Server) -> None:
         logger.info("Received Deepgram response: %s", response)
 
         if not card.validate_response(response):
-            logger.info("Level failed.")
-            ws.send(json.dumps({"type": "failure", "message": card.failure}))
+            _send(ws, {"type": "failure", "message": card.failure})
             break
 
-        logger.info("Level succeeded.")
-        ws.send(json.dumps({"type": "success", "message": card.success}))
+        _send(ws, {"type": "success", "message": card.success})
         score += 1
 
-    logger.info("Game over. Score: %s", score)
-    ws.send(json.dumps({"type": "game_over", "score": score}))
+    _send(ws, {"type": "game_over", "score": score})
+
+
+def _send(ws: simple_websocket.Server, data: Any) -> None:
+    logger.info("Sending message: %s", data)
+    ws.send(json.dumps(data))
+
+
+def _receive(
+    ws: simple_websocket.Server, timeout: int | float | None
+) -> bytes | dict | None:
+    data = ws.receive(timeout)
+    if data is None:
+        return None
+    if isinstance(data, str):
+        data = json.loads(data)
+        logger.info("Received message: %s", data)
+        return data
+    return data
