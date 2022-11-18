@@ -134,7 +134,7 @@ class SpeedTalkingCard(Card):
         super().__init__(
             prompt=f'You are home with another case of COVID and you discover a youtube video of the world\'s fastest talker. See if you can say this tongue twister before time is up: "{self.twister}"',
             options={"punctuate": False},
-            timeout=10,
+            timeout=5,
         )
 
     def validate_response(
