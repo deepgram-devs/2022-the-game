@@ -94,10 +94,12 @@ class CryptoCard(Card):
             return DEFAULT_ERROR
 
         topics = alternatives[0].get("topics") or []
-        topics = {topic2 for topic1 in topics for topic2 in topic1["topics"]}
-        topics = topics.intersection({"finance", "economy", "cryptocurrency"})
+        topics = {topic2["topic"] for topic1 in topics for topic2 in topic1["topics"]}
+        topics = topics.intersection(
+            {"finance", "banking", "inflation", "stock market", "cryptocurrency"}
+        )
 
-        if len(topics) < 2:
+        if len(topics) <= 2:
             return {"type": "failure", "message": "You're deep in the red!"}
 
         return {"type": "success", "message": "Nice recovery!"}
@@ -378,19 +380,26 @@ class OverbookedFlightCard(Card):
         if "sentiment_segments" in alternatives[0].keys():
             sentiments = alternatives[0]["sentiment_segments"]
             for segment in sentiments:
-                if segment['sentiment'] == 'negative':
-                    naiive_aggregate_sentiment -= segment['confidence']
-                elif segment['sentiment'] == 'positive':
-                    naiive_aggregate_sentiment += segment['confidence']
-        
-        target_topics = ['air travel', 'aircraft', 'travel', 'vacation', 'tourism', 'holidays']
+                if segment["sentiment"] == "negative":
+                    naiive_aggregate_sentiment -= segment["confidence"]
+                elif segment["sentiment"] == "positive":
+                    naiive_aggregate_sentiment += segment["confidence"]
+
+        target_topics = [
+            "air travel",
+            "aircraft",
+            "travel",
+            "vacation",
+            "tourism",
+            "holidays",
+        ]
         relevant = False
         if "topics" in alternatives[0].keys():
             topics = alternatives[0]["topics"]
             print(topics)
             for entry in topics:
-                if len(entry['topics']) > 0:
-                    for topic in entry['topics']:
+                if len(entry["topics"]) > 0:
+                    for topic in entry["topics"]:
                         if topic in target_topics:
                             relevant = True
         words = alternatives[0]["words"]
