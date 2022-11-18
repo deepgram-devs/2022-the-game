@@ -354,6 +354,67 @@ class TwitterMoneyCard(Card):
                 }
 
 
+class OverbookedFlightCard(Card):
+    def __init__(self) -> None:
+
+        super().__init__(
+            prompt=f"You overbooked a flight and now you have angry passengers. Put a positive spin on telling them that you won't be paying for their hotel rooms either.",
+            options={"analyze_sentiment": True, "detect_topics": True},
+            timeout=20,
+        )
+
+    def validate_response(
+        self, response: deepgram.transcription.PrerecordedTranscriptionResponse
+    ) -> dict:
+        channels = response["results"]["channels"]
+        if not channels:
+            return DEFAULT_ERROR
+
+        alternatives = channels[0]["alternatives"]
+        if not alternatives:
+            return DEFAULT_ERROR
+
+        naiive_aggregate_sentiment = 0
+        if "sentiment_segments" in alternatives[0].keys():
+            sentiments = alternatives[0]["sentiment_segments"]
+            for segment in sentiments:
+                if segment['sentiment'] == 'negative':
+                    naiive_aggregate_sentiment -= segment['confidence']
+                elif segment['sentiment'] == 'positive':
+                    naiive_aggregate_sentiment += segment['confidence']
+        
+        target_topics = ['air travel', 'aircraft', 'travel', 'vacation', 'tourism', 'holidays']
+        relevant = False
+        if "topics" in alternatives[0].keys():
+            topics = alternatives[0]["topics"]
+            print(topics)
+            for entry in topics:
+                if len(entry['topics']) > 0:
+                    for topic in entry['topics']:
+                        if topic in target_topics:
+                            relevant = True
+                
+        if naiive_aggregate_sentiment > 0 and relevant:
+            return {
+                "type": "success",
+                "message": "Hurray! You put such a positive spin on it. Continue 2022.",
+            }
+        elif naiive_aggregate_sentiment > 0 and not relevant:
+            return {
+                "type": "success",
+                "message": "You went off topic, but I felt very very positive vibes. Continue 2022.",
+            }
+        elif naiive_aggregate_sentiment < 0 and relevant:
+            return {
+                "type": "failure",
+                "message": "You said some of the right stuff but you weren't very positive. Better luck next time!",
+            }
+        else:
+            return {
+                "type": "failure",
+                "message": "That was neither positive nor on track for the right topics. Better luck next time!",
+            }
+
 AUDIO_START_TIMEOUT = 300
 
 
