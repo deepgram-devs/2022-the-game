@@ -40,6 +40,44 @@ class Card(abc.ABC):
         pass
 
 
+class HelloInForeignLanguageCard(Card):
+
+    OPTIONS = [
+        ("Mandarin", "China", "zh-CN", "nǐ hǎo"),
+        ("Spanish", "Spain", "es", "hola"),
+        ("French", "France", "fr", "bonjour"),
+    ]
+
+    def __init__(self) -> None:
+        self.language, self.country, self.model, self.word = random.choice(self.OPTIONS)
+
+        super().__init__(
+            prompt=f"You were born in California but you've been invited to compete for {self.country} in the Beijing Winter Olympics. Say hello in {self.language} ({self.word}).",
+            options={"punctuate": False, "language": self.model},
+            timeout=30,
+        )
+
+    def validate_response(
+        self, response: deepgram.transcription.PrerecordedTranscriptionResponse
+    ) -> dict:
+        channels = response["results"]["channels"]
+        if not channels:
+            return DEFAULT_ERROR
+
+        alternatives = channels[0]["alternatives"]
+        if not alternatives:
+            return DEFAULT_ERROR
+
+        transcript = alternatives[0]["transcript"].lower()
+        if self.word not in transcript:
+            return {
+                "type": "failure",
+                "message": f"Ouch! Your {self.language} needs a bit of work.",
+            }
+
+        return {"type": "success", "message": "You're a multilingual wizard!"}
+
+
 class TrappedFamilyCard(Card):
     def __init__(self) -> None:
         self.letter = random.choice(string.ascii_uppercase)
@@ -124,7 +162,7 @@ class SpeedTalkingCard(Card):
 class YouTubeContentCreatorCard(Card):
     def __init__(self) -> None:
         super().__init__(
-            prompt=f"You are a content creator and YouTube has cut their ad spend. Encourage your viewers to subscribe, smash that like button, click or hit the bell, etc.",
+            prompt="You are a content creator and YouTube has cut their ad spend. Encourage your viewers to subscribe, smash that like button, click or hit the bell, etc.",
             options={"punctuate": False},
             timeout=20,
         )
@@ -174,7 +212,7 @@ class YouTubeContentCreatorCard(Card):
 class TwitterHardcoreCard(Card):
     def __init__(self) -> None:
         super().__init__(
-            prompt=f'You survived the Twitter layoffs and were just informed that you now have to be "extremely hardcore" to keep your job. Affirm that you will be "extremely hardcore."',
+            prompt='You survived the Twitter layoffs and were just informed that you now have to be "extremely hardcore" to keep your job. Affirm that you will be "extremely hardcore."',
             options={"punctuate": False},
             timeout=20,
         )
@@ -203,7 +241,7 @@ class TwitterHardcoreCard(Card):
         }
 
 
-CARDS: list[Callable[[], Card]] = [SpeedTalkingCard]
+CARDS: list[Callable[[], Card]] = [HelloInForeignLanguageCard]
 CARD_TIMEOUT = 300
 
 
