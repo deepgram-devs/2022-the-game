@@ -5,6 +5,7 @@ import logging
 import random
 import string
 import time
+from typing import Callable
 
 import deepgram
 import simple_websocket
@@ -14,12 +15,6 @@ from . import config
 logger = logging.getLogger(__name__)
 
 deepgram_client = deepgram.Deepgram(config.DEEPGRAM_API_KEY)
-
-
-class CardFailed(Exception):
-    def __init__(self, reason: str) -> None:
-        super().__init__()
-        self.reason = reason
 
 
 class Card(abc.ABC):
@@ -71,11 +66,12 @@ class TrappedFamilyCard(Card):
         return count >= 10
 
 
-CARDS: list[type[Card]] = []
+CARDS: list[Callable[[], Card]] = [TrappedFamilyCard]
 START_RECORDING_TIMEOUT = 300
 
 
 def play(ws: simple_websocket.Server) -> None:
+    logger.info("Starting game")
     cards = [c() for c in CARDS]
     random.shuffle(cards)
 
@@ -122,4 +118,5 @@ def play(ws: simple_websocket.Server) -> None:
         ws.send(json.dumps({"type": "success", "message": card.success}))
         score += 1
 
+    logger.info("Game over. Score: %s", score)
     ws.send(json.dumps({"type": "game_over", "score": score}))

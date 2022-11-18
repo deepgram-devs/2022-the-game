@@ -1,3 +1,4 @@
+import logging
 import os
 
 import flask
@@ -30,7 +31,11 @@ def serve_app(path: str) -> flask.Response:
 # WebSocket endpoint
 @sock.route("/play")
 def play(ws: simple_websocket.Server) -> None:
-    game.play(ws)
+    try:
+        game.play(ws)
+    finally:
+        ws.close()
 
 
+logging.basicConfig(level=logging.INFO)
 app.run(host="0.0.0.0", port=config.APP_PORT, debug=config.APP_DEBUG)
