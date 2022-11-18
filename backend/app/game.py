@@ -106,7 +106,7 @@ class CryptoCard(Card):
 class HelloInForeignLanguageCard(Card):
 
     OPTIONS = [
-        ("Mandarin", "China", "zh-CN", "nǐ hǎo"),
+        ("Mandarin", "China", "zh-CN", "你好"),
         ("Spanish", "Spain", "es", "hola"),
         ("French", "France", "fr", "bonjour"),
     ]
