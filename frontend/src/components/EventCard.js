@@ -232,6 +232,22 @@ const modalReducer = (state, action) => {
   }
 };
 
+const getMonthNameFromScore = (score) =>
+  [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ][score];
+
 function Gameover({ score }) {
   return (
     <Col alignItems="center" justifyContent="center" style={{ gap: '20px' }}>
@@ -240,7 +256,7 @@ function Gameover({ score }) {
         justifyContent="center"
         style={{ fontWeight: 'bold', fontSize: '16px' }}
       >
-        You made it to [MONTH_NAME] with a score of {score}
+        You made it to {getMonthNameFromScore(score)} with a score of {score}
       </Row>
 
       <Row
