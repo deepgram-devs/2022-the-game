@@ -403,8 +403,10 @@ class OverbookedFlightCard(Card):
                         if topic in target_topics:
                             relevant = True
         words = alternatives[0]["words"]
-        relevant = sum(1 for word in words if word["word"].lower() in target_topics) >= 1
-                
+        relevant = (
+            sum(1 for word in words if word["word"].lower() in target_topics) >= 1
+        )
+
         if naiive_aggregate_sentiment > 0 and relevant:
             return {
                 "type": "success",
@@ -447,30 +449,42 @@ class PoliticalLettuceCard(Card):
         if not alternatives:
             return DEFAULT_ERROR
 
-        target_topics = ['vegetables', 'vegetable', 'food', 'diet', 'fruit', 'nutrition', 'health', 'cooking', 'candy', 'lettuce']
+        target_topics = [
+            "vegetables",
+            "vegetable",
+            "food",
+            "diet",
+            "fruit",
+            "nutrition",
+            "health",
+            "cooking",
+            "candy",
+            "lettuce",
+        ]
         relevant = False
         if "topics" in alternatives[0].keys():
             topics = alternatives[0]["topics"]
             print(topics)
             for entry in topics:
-                if len(entry['topics']) > 0:
-                    for topic in entry['topics']:
+                if len(entry["topics"]) > 0:
+                    for topic in entry["topics"]:
                         if topic in target_topics:
                             relevant = True
         words = alternatives[0]["words"]
-        relevant = sum(1 for word in words if word["word"].lower() in target_topics) >= 1
-                
+        relevant = (
+            sum(1 for word in words if word["word"].lower() in target_topics) >= 1
+        )
+
         if relevant:
             return {
                 "type": "success",
                 "message": "Hurray! You know your veggetables and can continue 2022.",
             }
         return {
-                "type": "failure",
-                "message": "You did not talk enough about lettuce. Or any vegetables, really. Better luck next time!",
-            }
+            "type": "failure",
+            "message": "You did not talk enough about lettuce. Or any vegetables, really. Better luck next time!",
+        }
 
-            
 
 AUDIO_START_TIMEOUT = 300
 
