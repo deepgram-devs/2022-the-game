@@ -1,4 +1,4 @@
-import { useCallback, useReducer } from 'react';
+import { useCallback, useEffect, useReducer, memo } from 'react';
 import { useWebSocket } from 'react-use-websocket/dist/lib/use-websocket';
 import CARD_DATA from '../CardData';
 import getSvgPath from '../utils/getSvgPath';
@@ -8,31 +8,46 @@ import Row from './Row';
 const reducer = (state, action) => {
   switch (action.type) {
     case 'ADD_CARD': {
-      const index = state.events.findIndex((event) => event.eventBody === null);
-      const newEvents = state.events;
-      newEvents[index] = {
-        ...newEvents[index],
-        eventBody: action.description,
-      };
-
       return {
         ...state,
-        events: newEvents,
+        currentCardIndex: action.currentCardIndex,
+        events: state.events.map((event, index) => {
+          if (action.currentCardIndex === index) {
+            return { ...event, eventBody: action.description };
+          } else {
+            return event;
+          }
+        }),
       };
     }
 
     case 'FAILED_CARD': {
-      const index = state.events.findIndex((event) => event.completed === null);
-      const newEvents = state.events;
-      newEvents[index] = {
-        ...newEvents[index],
-        failMessage: action.message,
-        completed: false,
-      };
-
       return {
         ...state,
-        events: newEvents,
+        events: state.events.map((event, index) => {
+          if (state.currentCardIndex === index) {
+            return { ...event, completed: false, failMessage: action.message };
+          } else {
+            return event;
+          }
+        }),
+      };
+    }
+
+    case 'SUCCEEDED_CARD': {
+      return {
+        ...state,
+        events: state.events.map((event, index) => {
+          if (state.currentCardIndex === index) {
+            return {
+              ...event,
+              completed: true,
+              successMessage: action.message,
+            };
+          } else {
+            return event;
+          }
+        }),
       };
     }
 
@@ -79,11 +94,38 @@ const getTitle = (index) =>
     'December',
   ][index];
 
-export default function GameBoard() {
+export default memo(function GameBoard() {
   const [state, dispatch] = useReducer(reducer, {
-    events: CARD_DATA,
+    currentCardIndex: -1,
+    events: [...CARD_DATA],
     totalScore: 0,
   });
+
+  const onMessage = useCallback(
+    (event) => {
+      const data = JSON.parse(event.data);
+      console.log('/play onMessage', data);
+
+      switch (data.type) {
+        case 'new_card':
+          dispatch({
+            type: 'ADD_CARD',
+            description: data.message,
+            currentCardIndex: state.currentCardIndex + 1,
+          });
+          break;
+
+        case 'failure':
+          dispatch({ type: 'FAILED_CARD', message: data.message });
+          break;
+
+        case 'success':
+          dispatch({ type: 'SUCCEEDED_CARD', message: data.message });
+          break;
+      }
+    },
+    [state.currentCardIndex]
+  );
 
   const {
     sendMessage,
@@ -95,20 +137,7 @@ export default function GameBoard() {
   } = useWebSocket(WEBSOCKET_URL, {
     onOpen: () => console.log('/play socket opened'),
     onClose: () => console.log('/play socket closed'),
-    onMessage: (event) => {
-      const data = JSON.parse(event.data);
-      console.log('/play onMessage', data);
-
-      switch (data.type) {
-        case 'new_card':
-          dispatch({ type: 'ADD_CARD', description: data.message });
-          break;
-
-        case 'failure':
-          dispatch({ type: 'FAILED_CARD', message: data.message });
-          break;
-      }
-    },
+    onMessage,
   });
 
   const lastCompletedEventIndex =
@@ -140,7 +169,7 @@ export default function GameBoard() {
     sendMessage(data);
   }, []);
 
-  // console.log('state.events', state.events);
+  console.log('state.events', state.events);
 
   return (
     <div
@@ -194,7 +223,7 @@ export default function GameBoard() {
       </Row>
     </div>
   );
-}
+});
 
 // bg: #050a0f
 // header bg: #0b121b

@@ -100,6 +100,7 @@ export default function EventCard({
               background: 'none',
               border: 'none',
               padding: 0,
+              visibility: completed === false ? 'hidden' : 'visible',
             }}
             onClick={closeModal}
           >
@@ -240,7 +241,7 @@ function Gameover() {
         justifyContent="center"
         style={{ fontWeight: 'bold', fontSize: '16px' }}
       >
-        You made it to May.
+        You made it to [MONTH_NAME].
       </Row>
 
       <Row
