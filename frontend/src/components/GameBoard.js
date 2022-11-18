@@ -62,7 +62,8 @@ const reducer = (state, action) => {
   }
 };
 
-const WEBSOCKET_URL = 'ws://localhost:8080/play';
+// const WEBSOCKET_URL = 'ws://localhost:8080/play';
+const WEBSOCKET_URL = 'ws://35.88.106.137:8080/play';
 
 export default memo(function GameBoard() {
   const [state, dispatch] = useReducer(reducer, {
