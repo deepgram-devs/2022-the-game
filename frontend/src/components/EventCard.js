@@ -39,6 +39,7 @@ export default function EventCard({
   startAudioStream,
   stopAudioStream,
   streamAudio,
+  score,
 }) {
   const [hoverRef, isHovered] = useHover();
   const [modalIsOpen, setIsOpen] = useState(false);
@@ -108,7 +109,7 @@ export default function EventCard({
 
         <div style={{ padding: '10px' }}>
           {state.showGameover ? (
-            <Gameover />
+            <Gameover score={score} />
           ) : (
             <Col style={{ gap: '30px' }}>
               <div>{eventBody}</div>
@@ -231,7 +232,7 @@ const modalReducer = (state, action) => {
   }
 };
 
-function Gameover() {
+function Gameover({ score }) {
   return (
     <Col alignItems="center" justifyContent="center" style={{ gap: '20px' }}>
       <Row
@@ -239,7 +240,7 @@ function Gameover() {
         justifyContent="center"
         style={{ fontWeight: 'bold', fontSize: '16px' }}
       >
-        You made it to [MONTH_NAME].
+        You made it to [MONTH_NAME] with a score of {score}
       </Row>
 
       <Row

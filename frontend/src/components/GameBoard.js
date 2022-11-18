@@ -51,6 +51,12 @@ const reducer = (state, action) => {
       };
     }
 
+    case 'GAME_OVER':
+      return {
+        ...state,
+        score: action.score,
+      };
+
     default:
       return state;
   }
@@ -62,7 +68,7 @@ export default memo(function GameBoard() {
   const [state, dispatch] = useReducer(reducer, {
     currentCardIndex: -1,
     events: [...CARD_DATA],
-    totalScore: 0,
+    score: 0,
   });
 
   const onMessage = useCallback(
@@ -85,6 +91,10 @@ export default memo(function GameBoard() {
 
         case 'success':
           dispatch({ type: 'SUCCEEDED_CARD', message: data.message });
+          break;
+
+        case 'game_over':
+          dispatch({ type: 'GAME_OVER', score: data.score });
           break;
       }
     },
@@ -148,6 +158,7 @@ export default memo(function GameBoard() {
         <EventCard
           key={eventCard.id}
           {...eventCard}
+          score={state.score}
           isActive={activeIndex === i}
           startAudioStream={startAudioStream}
           stopAudioStream={stopAudioStream}
