@@ -56,6 +56,8 @@ export default function EventCard({
     showGameover: false,
   });
 
+  const isGameWon = score !== null && completed;
+
   return (
     <Fragment>
       <Col
@@ -109,7 +111,7 @@ export default function EventCard({
 
         <div style={{ padding: '10px' }}>
           {state.showGameover ? (
-            <Gameover score={score} />
+            <Gameover score={score} isGameWon={isGameWon} />
           ) : (
             <Col style={{ gap: '30px' }}>
               <div>{eventBody}</div>
@@ -124,8 +126,9 @@ export default function EventCard({
                 <Verdict
                   message={completed ? successMessage : failMessage}
                   success={completed}
+                  isGameWon={isGameWon}
                   onClose={closeModal}
-                  onFailCtaClick={() => dispatch({ type: 'GAMEOVER' })}
+                  onGameOver={() => dispatch({ type: 'GAMEOVER' })}
                 />
               ) : null}
             </Col>
@@ -248,7 +251,7 @@ const getMonthNameFromScore = (score) =>
     'December',
   ][score];
 
-function Gameover({ score }) {
+function Gameover({ score, isGameWon }) {
   return (
     <Col alignItems="center" justifyContent="center" style={{ gap: '20px' }}>
       <Row
@@ -256,7 +259,11 @@ function Gameover({ score }) {
         justifyContent="center"
         style={{ fontWeight: 'bold', fontSize: '16px' }}
       >
-        You made it to {getMonthNameFromScore(score)} with a score of {score}
+        {isGameWon
+          ? 'You made it to 2023!'
+          : `You made it to ${getMonthNameFromScore(
+              score
+            )} with a score of ${score}`}
       </Row>
 
       <Row
@@ -264,9 +271,19 @@ function Gameover({ score }) {
         justifyContent="center"
         style={{ textAlign: 'center' }}
       >
-        Well, 2023 isn't for everyone.
-        <br />
-        You need to be extremely hardcore.
+        {isGameWon ? (
+          <Fragment>
+            Great. Just you wait till you see what 2023 has to offer
+            <br />
+            You need to be extremely hardcore.
+          </Fragment>
+        ) : (
+          <Fragment>
+            Well, 2023 isn't for everyone.
+            <br />
+            You need to be extremely hardcore.
+          </Fragment>
+        )}
       </Row>
 
       <Col alignItems="center" justifyContent="center" style={{ gap: '5px' }}>
@@ -303,7 +320,7 @@ function Gameover({ score }) {
   );
 }
 
-function Verdict({ message, success, onClose, onFailCtaClick }) {
+function Verdict({ isGameWon, message, success, onClose, onGameOver }) {
   return (
     <Col style={{ width: '100%' }} alignItems="center">
       <Row style={{ alignSelf: 'flex-start' }}>
@@ -331,10 +348,10 @@ function Verdict({ message, success, onClose, onFailCtaClick }) {
       </Row>
 
       <PrimaryButton
-        onClick={success ? onClose : onFailCtaClick}
+        onClick={isGameWon ? onGameOver : success ? onClose : onGameOver}
         style={{ marginTop: '20px' }}
       >
-        {success ? 'Next Challenge' : 'Oh No!'}
+        {isGameWon ? 'Congratulations!' : success ? 'Next Challenge' : 'Oh No!'}
       </PrimaryButton>
     </Col>
   );

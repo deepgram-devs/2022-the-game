@@ -68,7 +68,7 @@ export default memo(function GameBoard() {
   const [state, dispatch] = useReducer(reducer, {
     currentCardIndex: -1,
     events: [...CARD_DATA],
-    score: 0,
+    score: null,
   });
 
   const onMessage = useCallback(
