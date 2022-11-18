@@ -189,7 +189,7 @@ function EventCardImage({
 function CompletedEventCard() {
   return (
     <EventCardImage
-      title="Survivor Card"
+      title="Life Event Card"
       iconPath={getSvgPath('sparkle')}
       background={getSvgPath('card-completed')}
       borderColor="#1E2C3C"
@@ -260,7 +260,7 @@ function Gameover({ score, isGameWon }) {
         style={{ fontWeight: 'bold', fontSize: '16px' }}
       >
         {isGameWon
-          ? 'You made it to 2023!'
+          ? '🎉 You made it to 2023! 🎉'
           : `You made it to ${getMonthNameFromScore(
               score
             )} with a score of ${score}`}
