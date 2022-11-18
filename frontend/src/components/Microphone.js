@@ -11,7 +11,7 @@ const reducer = (state, action) => {
       return { ...state, isRecording: true };
 
     case 'RECORDING_STOPPED':
-      return { ...state, isRecording: false };
+      return { ...state, isRecording: false, buttonDisabled: true };
 
     default:
       return state;
@@ -25,6 +25,7 @@ export default function Microphone({
 }) {
   const [state, dispatch] = useReducer(reducer, {
     isRecording: false,
+    buttonDisabled: false,
   });
 
   const recorder = useMemo(
@@ -84,10 +85,12 @@ export default function Microphone({
       }}
     >
       <button
+        disabled={state.buttonDisabled}
         style={{
-          cursor: 'pointer',
+          cursor: state.buttonDisabled ? 'default' : 'pointer',
           borderRadius: '50%',
-          background: '#38EDAC',
+          background: state.buttonDisabled ? '#ccc' : '#38EDAC',
+          opacity: state.buttonDisabled ? 0.2 : 1,
           width: '80px',
           height: '80px',
         }}
