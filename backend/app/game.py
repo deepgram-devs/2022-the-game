@@ -40,6 +40,73 @@ class Card(abc.ABC):
         pass
 
 
+class CryptoCard(Card):
+    def __init__(self):
+        super().__init__(
+            prompt="You have (accidentally?) invested your entire life savings in Crypto. Bitcoin and ethereum are down and there's no sign of a recovery. Tell us how you're going to explain this to your spouse?",
+            options={"detect_topics": True},
+            timeout=30,
+        )
+
+    def validate_response(
+        self, response: deepgram.transcription.PrerecordedTranscriptionResponse
+    ) -> dict:
+        channels = response["results"]["channels"]
+        if not channels:
+            return DEFAULT_ERROR
+
+        alternatives = channels[0]["alternatives"]
+        if not alternatives:
+            return DEFAULT_ERROR
+
+        topics = alternatives[0].get("topics") or []
+        topics = {topic2 for topic1 in topics for topic2 in topic1["topics"]}
+        topics = topics.intersection({"finance", "economy", "cryptocurrency"})
+
+        if len(topics) < 2:
+            return {"type": "failure", "message": "You're deep in the red!"}
+
+        return {"type": "success", "message": "Nice recovery!"}
+
+
+class HelloInForeignLanguageCard(Card):
+
+    OPTIONS = [
+        ("Mandarin", "China", "zh-CN", "nǐ hǎo"),
+        ("Spanish", "Spain", "es", "hola"),
+        ("French", "France", "fr", "bonjour"),
+    ]
+
+    def __init__(self) -> None:
+        self.language, self.country, self.model, self.word = random.choice(self.OPTIONS)
+
+        super().__init__(
+            prompt=f"You were born in California but you've been invited to compete for {self.country} in the Beijing Winter Olympics. Say hello in {self.language} ({self.word}).",
+            options={"punctuate": False, "language": self.model},
+            timeout=30,
+        )
+
+    def validate_response(
+        self, response: deepgram.transcription.PrerecordedTranscriptionResponse
+    ) -> dict:
+        channels = response["results"]["channels"]
+        if not channels:
+            return DEFAULT_ERROR
+
+        alternatives = channels[0]["alternatives"]
+        if not alternatives:
+            return DEFAULT_ERROR
+
+        transcript = alternatives[0]["transcript"].lower()
+        if self.word not in transcript:
+            return {
+                "type": "failure",
+                "message": f"Ouch! Your {self.language} needs a bit of work.",
+            }
+
+        return {"type": "success", "message": "You're a multilingual wizard!"}
+
+
 class TrappedFamilyCard(Card):
     def __init__(self) -> None:
         self.letter = random.choice(string.ascii_uppercase)
@@ -86,6 +153,8 @@ class SpeedTalkingCard(Card):
 
     TWISTERS = [
         "she sells seashells by the seashore",
+        "peter piper picked a peck of pickled peppers",
+        "how much wood would a woodchuck chuck if a woodchuck could chuck wood",
     ]
 
     def __init__(self) -> None:
@@ -94,7 +163,7 @@ class SpeedTalkingCard(Card):
         super().__init__(
             prompt=f'You are home with another case of COVID and you discover a youtube video of the world\'s fastest talker. See if you can say this tongue twister before time is up: "{self.twister}"',
             options={"punctuate": False},
-            timeout=10,
+            timeout=5,
         )
 
     def validate_response(
@@ -108,8 +177,13 @@ class SpeedTalkingCard(Card):
         if not alternatives:
             return DEFAULT_ERROR
 
-        transcript = alternatives[0]["transcript"].lower()
-        if self.twister not in transcript:
+        transcript_words = set(
+            word["word"].lower() for word in alternatives[0]["words"]
+        )
+        twister_words = set(self.twister.split())
+        intersection = twister_words.intersection(transcript_words)
+
+        if len(intersection) < len(twister_words) / 2:
             return {"type": "failure", "message": "Cat got your tongue?"}
         return {"type": "success", "message": "Smooth talker!"}
 
@@ -117,7 +191,7 @@ class SpeedTalkingCard(Card):
 class YouTubeContentCreatorCard(Card):
     def __init__(self) -> None:
         super().__init__(
-            prompt=f"You are a content creator and YouTube has cut their ad spend. Encourage your viewers to subscribe, smash that like button, click or hit the bell, etc.",
+            prompt="You are a content creator and YouTube has cut their ad spend. Encourage your viewers to subscribe, smash that like button, click or hit the bell, etc.",
             options={"punctuate": False},
             timeout=20,
         )
@@ -167,7 +241,7 @@ class YouTubeContentCreatorCard(Card):
 class TwitterHardcoreCard(Card):
     def __init__(self) -> None:
         super().__init__(
-            prompt=f'You survived the Twitter layoffs and were just informed that you now have to be "extremely hardcore" to keep your job. Affirm that you will be "extremely hardcore."',
+            prompt='You survived the Twitter layoffs and were just informed that you now have to be "extremely hardcore" to keep your job. Affirm that you will be "extremely hardcore."',
             options={"punctuate": False},
             timeout=20,
         )
@@ -196,7 +270,57 @@ class TwitterHardcoreCard(Card):
         }
 
 
-CARDS: list[Callable[[], Card]] = [SpeedTalkingCard]
+class TwitterMoneyCard(Card):
+    def __init__(self) -> None:
+
+        super().__init__(
+            prompt=f"You want to become verified on Twitter. Tell me who you are, and pay me $20 dollars. Too much? Fine. $8.",
+            options={"detect_entities": True},
+            timeout=20,
+        )
+
+    def validate_response(
+        self, response: deepgram.transcription.PrerecordedTranscriptionResponse
+    ) -> dict:
+        channels = response["results"]["channels"]
+        if not channels:
+            return DEFAULT_ERROR
+
+        alternatives = channels[0]["alternatives"]
+        if not alternatives:
+            return DEFAULT_ERROR
+
+        transcript = alternatives[0]["transcript"]
+        if transcript == "":
+            return {
+                "type": "success",
+                "message": "You said nothing and I don't know who you are. But maybe that's the whole point? You can continue 2022.",
+            }
+
+        if "entities" in alternatives[0].keys():
+            entities = alternatives[0]["entities"]
+            if len(entities) > 1:
+                return {
+                    "type": "success",
+                    "message": "At first I heard you say you are {}, but then I thought I heard something else. Anyways, you can continue 2022.".format(
+                        entities[0]["value"]
+                    ),
+                }
+            elif len(entities) == 1:
+                return {
+                    "type": "success",
+                    "message": "So you are {}. Yes, I totally believe you. You can continue 2022.".format(
+                        entities[0]["value"]
+                    ),
+                }
+            else:
+                return {
+                    "type": "success",
+                    "message": "You said something but told me nothing about who you are. But maybe that's the whole point? You can continue 2022.",
+                }
+
+
+CARDS: list[Callable[[], Card]] = [CryptoCard]
 CARD_TIMEOUT = 300
 
 
