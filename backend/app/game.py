@@ -40,8 +40,42 @@ class Card(abc.ABC):
         pass
 
 
+class PurchaseTwitterCard(Card):
+    def __init__(self) -> None:
+        super().__init__(
+            prompt="You accidentally bought Twitter and your own account drowned in a sea of troll accounts imitating you. Get angry, click the button, and say: “Some people don't like change, but you need to embrace change if the alternative is disaster”",
+            options={"analyze_sentiment": True, "sent_thresh": 0.0},
+            timeout=30,
+        )
+
+    def validate_response(
+        self, response: deepgram.transcription.PrerecordedTranscriptionResponse
+    ) -> dict:
+        channels = response["results"]["channels"]
+        if not channels:
+            return DEFAULT_ERROR
+
+        alternatives = channels[0]["alternatives"]
+        if not alternatives:
+            return DEFAULT_ERROR
+
+        sentiment_segments = alternatives[0].get("sentiment_segments") or []
+        if not any(
+            segment["sentiment"] == "negative" for segment in sentiment_segments
+        ):
+            return {
+                "type": "failure",
+                "message": "You call that angry? Well aren't you a saint.",
+            }
+
+        return {
+            "type": "success",
+            "message": "Yes, YES! Let the hate flow through you.",
+        }
+
+
 class CryptoCard(Card):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             prompt="You have (accidentally?) invested your entire life savings in Crypto. Bitcoin and ethereum are down and there's no sign of a recovery. Tell us how you're going to explain this to your spouse?",
             options={"detect_topics": True},
@@ -112,7 +146,7 @@ class TrappedFamilyCard(Card):
         self.letter = random.choice(string.ascii_uppercase)
 
         super().__init__(
-            prompt=f'You are trapped with family over the holidays and they want to play a game. Try to say over 10 words that start with the letter "{self.letter}"',
+            prompt=f"You are trapped with family over the holidays and they want to play a game. Try to say over 10 words that start with the letter “{self.letter}”",
             options={"punctuate": False},
             timeout=30,
         )
@@ -161,7 +195,7 @@ class SpeedTalkingCard(Card):
         self.twister = random.choice(self.TWISTERS)
 
         super().__init__(
-            prompt=f'You are home with another case of COVID and you discover a youtube video of the world\'s fastest talker. See if you can say this tongue twister before time is up: "{self.twister}"',
+            prompt=f"You are home with another case of COVID and you discover a youtube video of the world's fastest talker. See if you can say this tongue twister before time is up: “{self.twister}”",
             options={"punctuate": False},
             timeout=5,
         )
@@ -241,7 +275,7 @@ class YouTubeContentCreatorCard(Card):
 class TwitterHardcoreCard(Card):
     def __init__(self) -> None:
         super().__init__(
-            prompt='You survived the Twitter layoffs and were just informed that you now have to be "extremely hardcore" to keep your job. Affirm that you will be "extremely hardcore."',
+            prompt="You survived the Twitter layoffs and were just informed that you now have to be “extremely hardcore” to keep your job. Affirm that you will be “extremely hardcore.”",
             options={"punctuate": False},
             timeout=20,
         )
@@ -320,13 +354,12 @@ class TwitterMoneyCard(Card):
                 }
 
 
-CARDS: list[Callable[[], Card]] = [CryptoCard]
-CARD_TIMEOUT = 300
+AUDIO_START_TIMEOUT = 300
 
 
 def play(ws: simple_websocket.Server) -> None:
     logger.info("Starting game")
-    cards = [c() for c in CARDS]
+    cards = [c() for c in Card.__subclasses__()]
     random.shuffle(cards)
 
     score = 0
@@ -337,7 +370,7 @@ def play(ws: simple_websocket.Server) -> None:
         _send(ws, {"type": "new_card", "message": card.prompt})
 
         card_start = time.time()
-        while (timeout := CARD_TIMEOUT - time.time() + card_start) > 0:
+        while (timeout := AUDIO_START_TIMEOUT - time.time() + card_start) > 0:
             data = _receive(ws, timeout)
             if isinstance(data, dict):
                 if data.get("type") == "audio_start":
