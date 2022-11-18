@@ -570,16 +570,31 @@ class OscarSlapCard(Card):
 
         words = alternatives[0]["words"]
         multispeaker = sum(word["speaker"] for word in words) > 1
-        
+        confidence = min((word["speaker_confidence"] for word in words), default=1.0)
+
         if multispeaker:
             return {
                 "type": "success",
                 "message": "You did it! But maybe don't pursue a career in voice acting just yet. Continue 2022.",
             }
-        return {
+
+        if confidence < 0.90:
+            return {
+                "type": "success",
+                "message": "It wasn't pretty, but I'll let you pass.",
+            }
+
+        if confidence < 0.99:
+            return {
                 "type": "failure",
                 "message": "You're not fooling me... all I heard was one person. Better luck next time!",
             }
+
+        return {
+            "type": "failure",
+            "message": "That's embarrassing... not even close.",
+        }
+
 
 AUDIO_START_TIMEOUT = 300
 
