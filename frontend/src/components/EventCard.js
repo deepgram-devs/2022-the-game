@@ -273,7 +273,7 @@ function Gameover({ score, isGameWon }) {
       >
         {isGameWon ? (
           <Fragment>
-            Great. Just you wait till you see what 2023 has to offer
+            Great. Just you wait till you see what 2023 has to offer.
             <br />
             You need to be extremely hardcore.
           </Fragment>
