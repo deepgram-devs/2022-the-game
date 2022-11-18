@@ -393,6 +393,8 @@ class OverbookedFlightCard(Card):
                     for topic in entry['topics']:
                         if topic in target_topics:
                             relevant = True
+        words = alternatives[0]["words"]
+        relevant = sum(1 for word in words if word["word"].lower() in target_topics) > 1
                 
         if naiive_aggregate_sentiment > 0 and relevant:
             return {
